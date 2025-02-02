@@ -74,48 +74,84 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     fig = px.histogram(data, x="satisfaction_score", nbins=10)
     st.plotly_chart(fig)
 
-    # Insights and Recommendations
+    # Insights and Recommendations (Dropdown Format)
     st.subheader("Insights & Recommendations")
     if data['satisfaction_score'].mean() >= 4:
         st.success("Things are going well! Keep up the good work.")
         
-        # Predictive Insights
-        st.markdown("**Predictive Insights:**")
-        st.write("- Customer satisfaction is expected to remain high based on current trends.")
-        st.write("- Likely to see a **10% increase** in repeat customers in the next quarter.")
+        # High Risk (Example: Even if overall satisfaction is high, some customers may still be at risk)
+        with st.expander("🔴 High Risk Customers"):
+            high_risk = data[data['churn_risk'] > 0.7]
+            if not high_risk.empty:
+                st.write(f"- **Number of High-Risk Customers:** {len(high_risk)}")
+                st.write("- **Key Issues:** Poor packaging, delayed delivery.")
+                st.write("- **Recommendations:**")
+                st.write("  - Offer personalized discounts to retain high-risk customers.")
+                st.write("  - Improve delivery times in regions with high churn risk.")
+            else:
+                st.write("No high-risk customers found.")
         
-        # Detailed Insights
-        st.markdown("**Detailed Insights:**")
-        st.write(f"- **Top Performing Region:** {data.groupby('region')['satisfaction_score'].mean().idxmax()} "
-                 f"(Average Satisfaction Score: {data.groupby('region')['satisfaction_score'].mean().max():.2f})")
-        st.write(f"- **Top Customer:** Customer ID {data.loc[data['total_spent'].idxmax(), 'customer_id']} "
-                 f"(Total Spent: ${data['total_spent'].max():,.2f})")
-        st.write("- **Most Loved Feature:** Fast delivery (mentioned in 70% of positive feedback).")
+        # Medium Risk
+        with st.expander("🟠 Medium Risk Customers"):
+            medium_risk = data[(data['churn_risk'] > 0.4) & (data['churn_risk'] <= 0.7)]
+            if not medium_risk.empty:
+                st.write(f"- **Number of Medium-Risk Customers:** {len(medium_risk)}")
+                st.write("- **Key Issues:** Mixed feedback on product quality.")
+                st.write("- **Recommendations:**")
+                st.write("  - Conduct customer surveys to identify specific pain points.")
+                st.write("  - Launch a customer loyalty program.")
+            else:
+                st.write("No medium-risk customers found.")
         
-        # Actionable Recommendations
-        st.markdown("**Actionable Recommendations:**")
-        st.write("- **Quick Win:** Launch a loyalty program to reward repeat customers.")
-        st.write("- **Long-Term Strategy:** Expand product offerings in the top-performing region.")
+        # Low Risk
+        with st.expander("🟢 Low Risk Customers"):
+            low_risk = data[data['churn_risk'] <= 0.4]
+            if not low_risk.empty:
+                st.write(f"- **Number of Low-Risk Customers:** {len(low_risk)}")
+                st.write("- **Key Strengths:** High satisfaction scores, positive feedback.")
+                st.write("- **Recommendations:**")
+                st.write("  - Encourage low-risk customers to refer friends with a referral program.")
+                st.write("  - Upsell premium products to loyal customers.")
+            else:
+                st.write("No low-risk customers found.")
     else:
         st.error("There are issues to address.")
         
-        # Predictive Insights
-        st.markdown("**Predictive Insights:**")
-        data = predict_churn(data)  # Predict churn risk
-        st.write(f"- **Churn Risk:** {data['churn_risk'].mean() * 100:.2f}% of customers are at risk of leaving.")
-        st.write("- Customer satisfaction is expected to drop by **15%** in the next quarter if issues are not addressed.")
+        # High Risk
+        with st.expander("🔴 High Risk Customers"):
+            high_risk = data[data['churn_risk'] > 0.7]
+            if not high_risk.empty:
+                st.write(f"- **Number of High-Risk Customers:** {len(high_risk)}")
+                st.write("- **Key Issues:** Poor packaging, delayed delivery.")
+                st.write("- **Recommendations:**")
+                st.write("  - Offer personalized discounts to retain high-risk customers.")
+                st.write("  - Improve delivery times in regions with high churn risk.")
+            else:
+                st.write("No high-risk customers found.")
         
-        # Detailed Insights
-        st.markdown("**Detailed Insights:**")
-        st.write(f"- **Worst Performing Region:** {data.groupby('region')['satisfaction_score'].mean().idxmin()} "
-                 f"(Average Satisfaction Score: {data.groupby('region')['satisfaction_score'].mean().min():.2f})")
-        st.write(f"- **At-Risk Customers:** {len(data[data['churn_risk'] > 0.5])} customers have a churn risk > 50%.")
-        st.write("- **Key Issue:** Poor packaging (mentioned in 60% of negative feedback).")
+        # Medium Risk
+        with st.expander("🟠 Medium Risk Customers"):
+            medium_risk = data[(data['churn_risk'] > 0.4) & (data['churn_risk'] <= 0.7)]
+            if not medium_risk.empty:
+                st.write(f"- **Number of Medium-Risk Customers:** {len(medium_risk)}")
+                st.write("- **Key Issues:** Mixed feedback on product quality.")
+                st.write("- **Recommendations:**")
+                st.write("  - Conduct customer surveys to identify specific pain points.")
+                st.write("  - Launch a customer loyalty program.")
+            else:
+                st.write("No medium-risk customers found.")
         
-        # Actionable Recommendations
-        st.markdown("**Actionable Recommendations:**")
-        st.write("- **Quick Win:** Improve packaging quality to reduce complaints.")
-        st.write("- **Long-Term Strategy:** Train customer support teams to handle complaints more effectively.")
+        # Low Risk
+        with st.expander("🟢 Low Risk Customers"):
+            low_risk = data[data['churn_risk'] <= 0.4]
+            if not low_risk.empty:
+                st.write(f"- **Number of Low-Risk Customers:** {len(low_risk)}")
+                st.write("- **Key Strengths:** High satisfaction scores, positive feedback.")
+                st.write("- **Recommendations:**")
+                st.write("  - Encourage low-risk customers to refer friends with a referral program.")
+                st.write("  - Upsell premium products to loyal customers.")
+            else:
+                st.write("No low-risk customers found.")
 
     # Sentiment Analysis
     st.subheader("Sentiment Analysis")
@@ -153,3 +189,41 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     )
 else:
     st.info("Please upload a CSV file or click the button to use randomly generated data.")
+
+# Secondary Inputs
+st.header("Secondary Input Methods")
+
+# LinkedIn URL
+st.subheader("Analyze Company LinkedIn Profile")
+linkedin_url = st.text_input("Enter Company LinkedIn URL", key="linkedin_url_input")
+if linkedin_url:
+    st.write(f"Fetching insights for LinkedIn URL: {linkedin_url}")
+    st.warning("LinkedIn API integration is not implemented in this demo.")
+
+# Company Website
+st.subheader("Analyze Company Website")
+website_url = st.text_input("Enter Company Website URL", key="website_url_input")
+if website_url:
+    st.write(f"Fetching insights for website: {website_url}")
+    st.warning("Website analysis is not implemented in this demo.")
+
+# Power BI
+st.subheader("Analyze Power BI Data")
+powerbi_url = st.text_input("Enter Power BI Sharable URL", key="powerbi_url_input")
+if powerbi_url:
+    st.write(f"Fetching data from Power BI: {powerbi_url}")
+    st.warning("Power BI integration is not implemented in this demo.")
+
+# CRM
+st.subheader("Analyze CRM Data")
+crm_url = st.text_input("Enter CRM Sharable URL", key="crm_url_input")
+if crm_url:
+    st.write(f"Fetching data from CRM: {crm_url}")
+    st.warning("CRM integration is not implemented in this demo.")
+
+# Salesforce
+st.subheader("Analyze Salesforce Data")
+salesforce_url = st.text_input("Enter Salesforce Sharable URL", key="salesforce_url_input")
+if salesforce_url:
+    st.write(f"Fetching data from Salesforce: {salesforce_url}")
+    st.warning("Salesforce integration is not implemented in this demo.")
