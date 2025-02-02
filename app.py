@@ -136,32 +136,42 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     fig = px.bar(filtered_data, x="industry", y="satisfaction_score", color="industry", barmode="group")
     st.plotly_chart(fig)
 
-    # Add personalized insights for each "red" customer
+    # Add dropdown for high-risk customers
     st.subheader("Personalized Insights for High-Risk Customers")
     high_risk_customers = data[data['churn_risk'] > 0.5]  # Customers with churn risk > 50%
     
     for index, row in high_risk_customers.iterrows():
-        st.markdown(f"### Customer ID: {row['company_id']}")
-        st.write(f"**Satisfaction Score:** {row['satisfaction_score']}")
-        st.write(f"**Feedback:** {row['feedback']}")
-        st.write(f"**Churn Risk:** {row['churn_risk'] * 100:.2f}%")
-        st.write(f"**Purchase Amount:** ${row['purchase_amount']:,.2f}")
-        st.write(f"**Industry:** {row['industry']}")
-        st.write(f"**Company Size:** {row['company_size']}")
-        st.write(f"**Days Since Last Purchase:** {row['last_purchase_days_ago']} days")
+        with st.expander(f"Customer ID: {row['company_id']}"):
+            st.write(f"**Satisfaction Score:** {row['satisfaction_score']}")
+            st.write(f"**Feedback:** {row['feedback']}")
+            st.write(f"**Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+            st.write(f"**Purchase Amount:** ${row['purchase_amount']:,.2f}")
+            st.write(f"**Industry:** {row['industry']}")
+            st.write(f"**Company Size:** {row['company_size']}")
+            st.write(f"**Days Since Last Purchase:** {row['last_purchase_days_ago']} days")
+            
+            # Personalized recommendation
+            st.markdown("**Personalized Recommendation:**")
+            st.write("- **Immediate Action:** Contact the customer to understand their concerns and offer solutions.")
+            st.write("- **Long-Term Plan:** Develop a tailored engagement strategy based on their feedback and industry requirements.")
+    
+    # Add dropdown for other customers with lower churn risk
+    st.subheader("Insights for Other Customers")
+    for churn_risk_level in [(0.2, 0.5), (0.0, 0.2)]:
+        risk_label = f"Customers with Churn Risk {churn_risk_level[0] * 100:.0f}% - {churn_risk_level[1] * 100:.0f}%"
+        customers = data[(data['churn_risk'] > churn_risk_level[0]) & (data['churn_risk'] <= churn_risk_level[1])]
         
-        # Personalized recommendation
-        st.markdown("**Personalized Recommendation:**")
-        st.write("- **Immediate Action:** Contact the customer to understand their concerns and offer solutions.")
-        st.write("- **Long-Term Plan:** Develop a tailored engagement strategy based on their feedback and industry requirements.")
+        with st.expander(risk_label):
+            for index, row in customers.iterrows():
+                st.write(f"### Customer ID: {row['company_id']}")
+                st.write(f"**Satisfaction Score:** {row['satisfaction_score']}")
+                st.write(f"**Feedback:** {row['feedback']}")
+                st.write(f"**Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                st.write(f"**Purchase Amount:** ${row['purchase_amount']:,.2f}")
+                st.write(f"**Industry:** {row['industry']}")
+                st.write(f"**Company Size:** {row['company_size']}")
+                st.write(f"**Days Since Last Purchase:** {row['last_purchase_days_ago']} days")
 
     # Add download button
     st.subheader("Download Analyzed Data")
-    st.download_button(
-        label="Download CSV",
-        data=filtered_data.to_csv().encode('utf-8'),
-        file_name="analyzed_data.csv",
-        mime="text/csv"
-    )
-else:
-    st.info("Please upload a CSV file or click the button to use randomly generated data.")
+    st.download
