@@ -52,7 +52,7 @@ if uploaded_file is not None:
 st.subheader("Live Market Data")
 def get_market_data():
     try:
-        api_key = "YOUR_API_KEY"  # Replace with your actual API key
+        api_key = "758AUAMY7VA84YW3"  # Replace with your actual API key
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=MSFT&apikey={api_key}"
         response = requests.get(url)
         
