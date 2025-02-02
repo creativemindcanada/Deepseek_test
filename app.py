@@ -75,7 +75,10 @@ def get_market_data():
 # Add market data to the app
 st.subheader("Live Market Data")
 market_data = get_market_data()
-st.write(market_data)
+if market_data:
+    st.write(market_data)
+else:
+    st.warning("No market data available.")
 # Add a slider for filtering satisfaction scores
 st.subheader("Filter Data")
 min_score = st.slider("Minimum Satisfaction Score", 1, 5, 3)
