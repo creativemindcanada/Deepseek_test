@@ -2,10 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import time  # Import the time module
+import requests
 
 # Title of the app
 st.title("Customer Insights Dashboard")
+
+# Current Dashboard (Primary)
+st.header("Primary Dashboard: Upload CSV or Use Random Data")
 
 # Function to generate random customer data
 def generate_random_data():
@@ -113,18 +116,7 @@ if linkedin_url:
     with st.spinner("Fetching LinkedIn insights..."):
         time.sleep(2)  # Simulate a delay
         company_name = linkedin_url.split("/")[-1].replace("-", " ").title()
-        mock_linkedin_data = {
-            "Company Name": company_name,
-            "Followers": f"{random.randint(1000, 1000000):,}",
-            "Employees": f"{random.randint(100, 50000):,}",
-            "Industry": random.choice(["Technology", "Healthcare", "Finance", "Retail"]),
-            "Location": random.choice(["San Francisco, CA", "New York, NY", "London, UK", "Bangalore, India"]),
-            "Recent Posts": [
-                f"Excited to announce our new {random.choice(['AI-powered', 'blockchain-based', 'cloud-native'])} product!",
-                f"Join us at the {company_name} {random.choice(['conference', 'summit', 'hackathon'])} next month!",
-                f"We're hiring! Check out our open positions in {random.choice(['engineering', 'marketing', 'sales'])}."
-            ]
-        }
+        mock_linkedin_data = generate_mock_linkedin_data(company_name)
     
     # Display Mock Data
     st.subheader("Mock LinkedIn Insights")
@@ -157,3 +149,33 @@ if linkedin_url:
     For this demo, we're using mock data to simulate LinkedIn insights. 
     If you need real LinkedIn data, consider applying for LinkedIn's API access or using alternative tools like Clearbit or Crunchbase.
     """)
+# Option 2: Company Website URL
+st.subheader("Analyze Company Website")
+website_url = st.text_input("Enter Company Website URL")
+if website_url:
+    st.write(f"Fetching insights for website: {website_url}")
+    # Add website analysis logic here (e.g., Google PageSpeed Insights)
+    st.warning("Website analysis is not implemented in this demo.")
+
+# Option 3: Sharable Link (Google Sheets, Airtable)
+st.subheader("Analyze Data from Sharable Link")
+sharable_link = st.text_input("Enter Sharable Link (Google Sheets, Airtable, etc.)")
+if sharable_link:
+    st.write(f"Fetching data from sharable link: {sharable_link}")
+    # Add Google Sheets or Airtable integration logic here
+    st.warning("Sharable link integration is not implemented in this demo.")
+
+# Option 4: Social Media Handles
+st.subheader("Analyze Social Media Engagement")
+social_media_handle = st.text_input("Enter Social Media Handle (e.g., @company)")
+if social_media_handle:
+    st.write(f"Fetching insights for social media handle: {social_media_handle}")
+    # Add social media API integration logic here
+    st.warning("Social media API integration is not implemented in this demo.")
+
+# Option 5: Latest Trends
+st.subheader("Latest Market Trends")
+if st.button("Fetch Latest Trends"):
+    st.write("Fetching the latest market trends...")
+    # Add Google Trends or OpenAI GPT integration logic here
+    st.warning("Trend analysis is not implemented in this demo.")
