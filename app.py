@@ -34,3 +34,22 @@ if uploaded_file is not None:
         st.write("Recommendations: Investigate customer feedback and improve product/service quality.")
 else:
     st.info("Please upload a CSV file to get started.")
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import nltk
+
+# Download the sentiment analysis model
+nltk.download('vader_lexicon')
+
+# Function to analyze sentiment
+def analyze_sentiment(text):
+    sia = SentimentIntensityAnalyzer()
+    return sia.polarity_scores(text)['compound']
+
+# Add sentiment analysis to the app
+if uploaded_file is not None:
+    data = pd.read_csv(uploaded_file)
+    data['sentiment'] = data['feedback'].apply(analyze_sentiment)
+
+    # Display sentiment analysis results
+    st.subheader("Sentiment Analysis")
+    st.write(data[['customer_id', 'feedback', 'sentiment']])
