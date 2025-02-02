@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import requests
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import nltk
+
+# Download the sentiment analysis model
+nltk.download('vader_lexicon')
 
 # Title of the app
 st.title("Customer Insights Dashboard")
@@ -32,33 +38,21 @@ if uploaded_file is not None:
     else:
         st.error("There are issues to address.")
         st.write("Recommendations: Investigate customer feedback and improve product/service quality.")
-else:
-    st.info("Please upload a CSV file to get started.")
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import nltk
 
-# Download the sentiment analysis model
-nltk.download('vader_lexicon')
-
-# Function to analyze sentiment
-def analyze_sentiment(text):
-    sia = SentimentIntensityAnalyzer()
-    return sia.polarity_scores(text)['compound']
-
-# Add sentiment analysis to the app
-if uploaded_file is not None:
-    data = pd.read_csv(uploaded_file)
-    data['sentiment'] = data['feedback'].apply(analyze_sentiment)
-
-    # Display sentiment analysis results
+    # Sentiment Analysis
     st.subheader("Sentiment Analysis")
+    def analyze_sentiment(text):
+        sia = SentimentIntensityAnalyzer()
+        return sia.polarity_scores(text)['compound']
+    
+    data['sentiment'] = data['feedback'].apply(analyze_sentiment)
     st.write(data[['customer_id', 'feedback', 'sentiment']])
-    import requests
 
-# Function to get live market data
+# Live Market Data
+st.subheader("Live Market Data")
 def get_market_data():
-     try:
-        api_key = "758AUAMY7VA84YW3"  # Replace with your actual API key
+    try:
+        api_key = "YOUR_API_KEY"  # Replace with your actual API key
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=MSFT&apikey={api_key}"
         response = requests.get(url)
         
@@ -72,19 +66,8 @@ def get_market_data():
         st.error(f"An error occurred: {e}")
         return None
 
-# Add market data to the app
-st.subheader("Live Market Data")
 market_data = get_market_data()
 if market_data:
     st.write(market_data)
 else:
     st.warning("No market data available.")
-# Add a slider for filtering satisfaction scores
-st.subheader("Filter Data")
-min_score = st.slider("Minimum Satisfaction Score", 1, 5, 3)
-
-# Filter the data
-filtered_data = data[data['satisfaction_score'] >= min_score]
-
-# Display filtered data
-st.write(filtered_data)
