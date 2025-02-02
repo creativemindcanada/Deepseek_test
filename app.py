@@ -53,3 +53,16 @@ if uploaded_file is not None:
     # Display sentiment analysis results
     st.subheader("Sentiment Analysis")
     st.write(data[['customer_id', 'feedback', 'sentiment']])
+    import requests
+
+# Function to get live market data
+def get_market_data():
+    api_key = "YOUR_API_KEY"  # Replace with your Alpha Vantage API key
+    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=MSFT&apikey={api_key}"
+    response = requests.get(url)
+    return response.json()
+
+# Add market data to the app
+st.subheader("Live Market Data")
+market_data = get_market_data()
+st.write(market_data)
