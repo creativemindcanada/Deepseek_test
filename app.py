@@ -71,3 +71,24 @@ if market_data:
     st.write(market_data)
 else:
     st.warning("No market data available.")
+import pandas as pd
+import numpy as np
+
+# Generate random customer data
+def generate_random_data():
+    np.random.seed(42)
+    data = {
+        "customer_id": range(1, 101),
+        "satisfaction_score": np.random.randint(1, 6, 100),
+        "feedback": np.random.choice([
+            "Great product!", "Good quality.", "Delivery was late.", "Poor packaging.", "Excellent service!"
+        ], 100),
+        "purchase_amount": np.random.uniform(10, 500, 100).round(2),
+        "region": np.random.choice(["North", "South", "East", "West"], 100)
+    }
+    return pd.DataFrame(data)
+
+# Display random data
+st.subheader("Randomly Generated Customer Data")
+random_data = generate_random_data()
+st.write(random_data)
