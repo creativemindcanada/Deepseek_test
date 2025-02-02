@@ -57,7 +57,7 @@ if uploaded_file is not None:
 
 # Function to get live market data
 def get_market_data():
-    api_key = "YOUR_API_KEY"  # Replace with your Alpha Vantage API key
+    api_key = "758AUAMY7VA84YW3"  # Replace with your Alpha Vantage API key
     url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=MSFT&apikey={api_key}"
     response = requests.get(url)
     return response.json()
