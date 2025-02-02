@@ -59,6 +59,9 @@ else:
 if 'data' in st.session_state and st.session_state['data'] is not None:
     data = st.session_state['data']
 
+    # Predict churn risk
+    data = predict_churn(data)  # Add this line to ensure churn_risk column exists
+
     # Display raw data
     st.subheader("Raw Data")
     st.write(data)
