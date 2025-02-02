@@ -173,5 +173,4 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write(f"**Days Since Last Purchase:** {row['last_purchase_days_ago']} days")
 
     # Add download button
-    st.subheader("Download Analyzed Data")
-    st.download
+    st.subheader
