@@ -66,3 +66,12 @@ def get_market_data():
 st.subheader("Live Market Data")
 market_data = get_market_data()
 st.write(market_data)
+# Add a slider for filtering satisfaction scores
+st.subheader("Filter Data")
+min_score = st.slider("Minimum Satisfaction Score", 1, 5, 3)
+
+# Filter the data
+filtered_data = data[data['satisfaction_score'] >= min_score]
+
+# Display filtered data
+st.write(filtered_data)
