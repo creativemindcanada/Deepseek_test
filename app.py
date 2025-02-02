@@ -5,32 +5,37 @@ import plotly.express as px
 from sklearn.linear_model import LogisticRegression
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
+from datetime import datetime, timedelta
 
 # Download NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
 
 # Title of the app
-st.title("B2B Customer Insights Dashboard")
+st.title("Customer Insights Dashboard")
 
-# Function to generate random B2B customer data with specified units
+# Function to generate random customer data
 def generate_random_data():
     np.random.seed(42)
+    num_customers = 100  # Generate 100 customers
     data = {
-        "company_id": range(1, 101),
-        "satisfaction_score": np.random.randint(1, 6, 100),  # Scale 1-5
+        "customer_id": range(1, num_customers + 1),
+        "satisfaction_score": np.random.randint(1, 6, num_customers),
         "feedback": np.random.choice([
-            "Excellent service!", "Good quality.", "Late delivery.", "Packaging issues.", "Great support!"
-        ], 100),
-        "purchase_amount": np.random.uniform(1000, 50000, 100).round(2),  # In USD
-        "industry": np.random.choice(["Manufacturing", "Retail", "Healthcare", "Finance", "IT"], 100),
-        "company_size": np.random.choice(["Small", "Medium", "Large"], 100),  # Company size categories
-        "last_purchase_days_ago": np.random.randint(0, 365, 100)  # Days since last purchase
+            "Great product!", "Good quality.", "Delivery was late.", "Poor packaging.", "Excellent service!"
+        ], num_customers),
+        "purchase_amount": np.random.uniform(10, 500, num_customers).round(2),
+        "region": np.random.choice(["North", "South", "East", "West"], num_customers),
+        "age": np.random.randint(18, 65, num_customers),
+        "gender": np.random.choice(["Male", "Female", "Other"], num_customers),
+        "loyalty_status": np.random.choice(["New", "Regular", "VIP"], num_customers, p=[0.5, 0.3, 0.2]),
+        "last_purchase_date": [datetime.now() - timedelta(days=np.random.randint(1, 365)) for _ in range(num_customers)],
+        "total_spent": np.random.uniform(100, 5000, num_customers).round(2)
     }
     return pd.DataFrame(data)
 
 # Function to predict churn risk
 def predict_churn(data):
-    X = data[['satisfaction_score', 'purchase_amount', 'last_purchase_days_ago']]
+    X = data[['satisfaction_score', 'purchase_amount', 'total_spent']]
     y = (data['satisfaction_score'] < 3).astype(int)  # Churn if satisfaction < 3
     model = LogisticRegression()
     model.fit(X, y)
@@ -62,8 +67,7 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     st.subheader("Basic Analysis")
     st.write(f"Total Customers: {len(data)}")
     st.write(f"Average Satisfaction Score: {data['satisfaction_score'].mean():.2f}")
-    st.write(f"Total Purchase Amount: ${data['purchase_amount'].sum():,.2f}")
-    st.write(f"Average Days Since Last Purchase: {data['last_purchase_days_ago'].mean():.2f} days")
+    st.write(f"Total Revenue: ${data['total_spent'].sum():,.2f}")
 
     # Visualizations
     st.subheader("Customer Satisfaction Distribution")
@@ -77,19 +81,21 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
         
         # Predictive Insights
         st.markdown("**Predictive Insights:**")
-        st.write("- Overall customer satisfaction is high. Expect continued strong performance.")
-        st.write("- Anticipated **15% increase** in large contract renewals next quarter.")
-
+        st.write("- Customer satisfaction is expected to remain high based on current trends.")
+        st.write("- Likely to see a **10% increase** in repeat customers in the next quarter.")
+        
         # Detailed Insights
         st.markdown("**Detailed Insights:**")
-        st.write(f"- **Top Performing Industry:** {data.groupby('industry')['satisfaction_score'].mean().idxmax()} "
-                 f"(Average Satisfaction Score: {data.groupby('industry')['satisfaction_score'].mean().max():.2f})")
-        st.write("- **Most Appreciated Feature:** Excellent support (mentioned in 80% of positive feedback).")
-
+        st.write(f"- **Top Performing Region:** {data.groupby('region')['satisfaction_score'].mean().idxmax()} "
+                 f"(Average Satisfaction Score: {data.groupby('region')['satisfaction_score'].mean().max():.2f})")
+        st.write(f"- **Top Customer:** Customer ID {data.loc[data['total_spent'].idxmax(), 'customer_id']} "
+                 f"(Total Spent: ${data['total_spent'].max():,.2f})")
+        st.write("- **Most Loved Feature:** Fast delivery (mentioned in 70% of positive feedback).")
+        
         # Actionable Recommendations
         st.markdown("**Actionable Recommendations:**")
-        st.write("- **Quick Win:** Offer loyalty discounts to large companies for repeat business.")
-        st.write("- **Long-Term Strategy:** Invest in support and delivery services for the top-performing industry.")
+        st.write("- **Quick Win:** Launch a loyalty program to reward repeat customers.")
+        st.write("- **Long-Term Strategy:** Expand product offerings in the top-performing region.")
     else:
         st.error("There are issues to address.")
         
@@ -97,18 +103,19 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
         st.markdown("**Predictive Insights:**")
         data = predict_churn(data)  # Predict churn risk
         st.write(f"- **Churn Risk:** {data['churn_risk'].mean() * 100:.2f}% of customers are at risk of leaving.")
-        st.write("- Without addressing issues, satisfaction is expected to drop by **20%** in the next quarter.")
-
+        st.write("- Customer satisfaction is expected to drop by **15%** in the next quarter if issues are not addressed.")
+        
         # Detailed Insights
         st.markdown("**Detailed Insights:**")
-        st.write(f"- **Worst Performing Industry:** {data.groupby('industry')['satisfaction_score'].mean().idxmin()} "
-                 f"(Average Satisfaction Score: {data.groupby('industry')['satisfaction_score'].mean().min():.2f})")
-        st.write("- **Primary Issue:** Late deliveries (mentioned in 70% of negative feedback).")
-
+        st.write(f"- **Worst Performing Region:** {data.groupby('region')['satisfaction_score'].mean().idxmin()} "
+                 f"(Average Satisfaction Score: {data.groupby('region')['satisfaction_score'].mean().min():.2f})")
+        st.write(f"- **At-Risk Customers:** {len(data[data['churn_risk'] > 0.5])} customers have a churn risk > 50%.")
+        st.write("- **Key Issue:** Poor packaging (mentioned in 60% of negative feedback).")
+        
         # Actionable Recommendations
         st.markdown("**Actionable Recommendations:**")
-        st.write("- **Quick Win:** Improve logistics to address late delivery complaints.")
-        st.write("- **Long-Term Strategy:** Implement a comprehensive customer feedback system to identify and address issues promptly.")
+        st.write("- **Quick Win:** Improve packaging quality to reduce complaints.")
+        st.write("- **Long-Term Strategy:** Train customer support teams to handle complaints more effectively.")
 
     # Sentiment Analysis
     st.subheader("Sentiment Analysis")
@@ -117,46 +124,24 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
         return sia.polarity_scores(text)['compound']
 
     data['sentiment'] = data['feedback'].apply(analyze_sentiment)
-    st.write(data[['company_id', 'feedback', 'sentiment']])
+    st.write(data[['customer_id', 'feedback', 'sentiment']])
 
     # Add filters
     st.subheader("Filter Data")
     min_score = st.slider("Minimum Satisfaction Score", 1, 5, 3)
-    industry_filter = st.selectbox("Select Industry", ["All", "Manufacturing", "Retail", "Healthcare", "Finance", "IT"])
+    region_filter = st.selectbox("Select Region", ["All", "North", "South", "East", "West"])
 
     # Apply filters
     filtered_data = data[data['satisfaction_score'] >= min_score]
-    if industry_filter != "All":
-        filtered_data = filtered_data[filtered_data['industry'] == industry_filter]
+    if region_filter != "All":
+        filtered_data = filtered_data[filtered_data['region'] == region_filter]
 
     st.write(filtered_data)
 
     # Add visualizations
-    st.subheader("Customer Satisfaction by Industry")
-    fig = px.bar(filtered_data, x="industry", y="satisfaction_score", color="industry", barmode="group")
+    st.subheader("Customer Satisfaction by Region")
+    fig = px.bar(filtered_data, x="region", y="satisfaction_score", color="region", barmode="group")
     st.plotly_chart(fig)
-
-    # Add dropdown for high-risk customers
-    st.subheader("Personalized Insights for High-Risk Customers")
-    high_risk_customers = data[data['churn_risk'] > 0.5]  # Customers with churn risk > 50%
-    
-    customer_ids = high_risk_customers['company_id'].tolist()
-    selected_customer_id = st.selectbox("Select Customer ID", customer_ids)
-
-    if selected_customer_id:
-        customer_data = high_risk_customers[high_risk_customers['company_id'] == selected_customer_id].iloc[0]
-        st.write(f"**Satisfaction Score:** {customer_data['satisfaction_score']}")
-        st.write(f"**Feedback:** {customer_data['feedback']}")
-        st.write(f"**Churn Risk:** {customer_data['churn_risk'] * 100:.2f}%")
-        st.write(f"**Purchase Amount:** ${customer_data['purchase_amount']:,.2f}")
-        st.write(f"**Industry:** {customer_data['industry']}")
-        st.write(f"**Company Size:** {customer_data['company_size']}")
-        st.write(f"**Days Since Last Purchase:** {customer_data['last_purchase_days_ago']} days")
-        
-        # Personalized recommendation
-        st.markdown("**Personalized Recommendation:**")
-        st.write("- **Immediate Action:** Contact the customer to understand their concerns and offer solutions.")
-        st.write("- **Long-Term Plan:** Develop a tailored engagement strategy based on their feedback and industry requirements.")
 
     # Add download button
     st.subheader("Download Analyzed Data")
