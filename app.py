@@ -109,12 +109,41 @@ else:
 st.header("Alternative Input Methods")
 
 # Option 1: Company LinkedIn URL
+# Option 1: Company LinkedIn URL
 st.subheader("Analyze Company LinkedIn Profile")
 linkedin_url = st.text_input("Enter Company LinkedIn URL")
 if linkedin_url:
     st.write(f"Fetching insights for LinkedIn URL: {linkedin_url}")
-    # Add LinkedIn API integration or web scraping logic here
-    st.warning("LinkedIn API integration is not implemented in this demo.")
+    
+    # Mock LinkedIn Data
+    mock_linkedin_data = {
+        "Company Name": "NVIDIA",
+        "Followers": "2,500,000",
+        "Employees": "20,000",
+        "Industry": "Semiconductors",
+        "Recent Posts": [
+            "Excited to announce our new AI-powered GPU!",
+            "Join us at the NVIDIA GTC conference next month!",
+            "We're hiring! Check out our open positions."
+        ]
+    }
+    
+    # Display Mock Data
+    st.subheader("Mock LinkedIn Insights")
+    st.write(f"**Company Name:** {mock_linkedin_data['Company Name']}")
+    st.write(f"**Followers:** {mock_linkedin_data['Followers']}")
+    st.write(f"**Employees:** {mock_linkedin_data['Employees']}")
+    st.write(f"**Industry:** {mock_linkedin_data['Industry']}")
+    
+    st.subheader("Recent Posts")
+    for post in mock_linkedin_data['Recent Posts']:
+        st.write(f"- {post}")
+    
+    # Add Disclaimer
+    st.warning("""
+    **Note:** LinkedIn API integration is not available in this demo. 
+    The insights shown are for demonstration purposes only.
+    """)
 
 # Option 2: Company Website URL
 st.subheader("Analyze Company Website")
