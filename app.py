@@ -17,18 +17,21 @@ def generate_random_data():
     np.random.seed(42)
     data = {
         "customer_id": range(1, 101),
-        "satisfaction_score": np.random.randint(1, 6, 100),
+        "satisfaction_score": np.random.randint(1, 6, 100),  # Scale 1-5
         "feedback": np.random.choice([
             "Great product!", "Good quality.", "Delivery was late.", "Poor packaging.", "Excellent service!"
         ], 100),
-        "purchase_amount": np.random.uniform(10, 500, 100).round(2),
-        "region": np.random.choice(["North", "South", "East", "West"], 100)
+        "purchase_amount": np.random.uniform(10, 500, 100).round(2),  # In USD
+        "region": np.random.choice(["North", "South", "East", "West"], 100),
+        "age": np.random.randint(18, 70, 100),  # Age in years
+        "gender": np.random.choice(["Male", "Female", "Other"], 100),
+        "last_purchase_days_ago": np.random.randint(0, 365, 100)  # Days since last purchase
     }
     return pd.DataFrame(data)
 
 # Function to predict churn risk
 def predict_churn(data):
-    X = data[['satisfaction_score', 'purchase_amount']]
+    X = data[['satisfaction_score', 'purchase_amount', 'age', 'last_purchase_days_ago']]
     y = (data['satisfaction_score'] < 3).astype(int)  # Churn if satisfaction < 3
     model = LogisticRegression()
     model.fit(X, y)
