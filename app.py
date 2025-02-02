@@ -110,7 +110,7 @@ st.header("Alternative Input Methods")
 
 # Option 1: Company LinkedIn URL
 st.subheader("Analyze Company LinkedIn Profile")
-linkedin_url = st.text_input("Enter Company LinkedIn URL", key="linkedin_url")
+linkedin_url = st.text_input("Enter Company LinkedIn URL", key="linkedin_url_input")  # Unique key
 
 if linkedin_url:
     with st.spinner("Fetching LinkedIn insights..."):
@@ -132,53 +132,13 @@ if linkedin_url:
     
     # Feedback Button
     st.write("Was this helpful?")
-    if st.button("👍 Yes"):
+    if st.button("👍 Yes", key="feedback_yes"):  # Unique key
         st.success("Thanks for your feedback!")
-    if st.button("👎 No"):
+    if st.button("👎 No", key="feedback_no"):  # Unique key
         st.error("We'll improve this feature soon!")
     
     # Try Another Company
-    if st.button("Try Another Company"):
-        st.session_state['linkedin_url'] = ""  # Clear the input
-        st.experimental_rerun()  # Refresh the app
-    
-    # Learn More Section
-    st.subheader("Why Can't We Access Real LinkedIn Data?")
-    st.write("""
-    LinkedIn's API is restricted and requires special permissions to access. 
-    For this demo, we're using mock data to simulate LinkedIn insights. 
-    If you need real LinkedIn data, consider applying for LinkedIn's API access or using alternative tools like Clearbit or Crunchbase.
-    """)# Option 1: Company LinkedIn URL
-st.subheader("Analyze Company LinkedIn Profile")
-linkedin_url = st.text_input("Enter Company LinkedIn URL", key="linkedin_url")
-
-if linkedin_url:
-    with st.spinner("Fetching LinkedIn insights..."):
-        time.sleep(2)  # Simulate a delay
-        company_name = linkedin_url.split("/")[-1].replace("-", " ").title()
-        mock_linkedin_data = generate_mock_linkedin_data(company_name)
-    
-    # Display Mock Data
-    st.subheader("Mock LinkedIn Insights")
-    st.write(f"**Company Name:** {mock_linkedin_data['Company Name']}")
-    st.write(f"**Followers:** {mock_linkedin_data['Followers']}")
-    st.write(f"**Employees:** {mock_linkedin_data['Employees']}")
-    st.write(f"**Industry:** {mock_linkedin_data['Industry']}")
-    st.write(f"**Location:** {mock_linkedin_data['Location']}")
-    
-    st.subheader("Recent Posts")
-    for post in mock_linkedin_data['Recent Posts']:
-        st.write(f"- {post}")
-    
-    # Feedback Button
-    st.write("Was this helpful?")
-    if st.button("👍 Yes"):
-        st.success("Thanks for your feedback!")
-    if st.button("👎 No"):
-        st.error("We'll improve this feature soon!")
-    
-    # Try Another Company
-    if st.button("Try Another Company"):
+    if st.button("Try Another Company", key="try_another_company"):  # Unique key
         st.session_state['linkedin_url'] = ""  # Clear the input
         st.experimental_rerun()  # Refresh the app
     
@@ -189,7 +149,6 @@ if linkedin_url:
     For this demo, we're using mock data to simulate LinkedIn insights. 
     If you need real LinkedIn data, consider applying for LinkedIn's API access or using alternative tools like Clearbit or Crunchbase.
     """)
-
 # Option 2: Company Website URL
 st.subheader("Analyze Company Website")
 website_url = st.text_input("Enter Company Website URL")
