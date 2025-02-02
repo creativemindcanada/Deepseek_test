@@ -116,7 +116,18 @@ if linkedin_url:
     with st.spinner("Fetching LinkedIn insights..."):
         time.sleep(2)  # Simulate a delay
         company_name = linkedin_url.split("/")[-1].replace("-", " ").title()
-        mock_linkedin_data = generate_mock_linkedin_data(company_name)
+        mock_linkedin_data = {
+            "Company Name": company_name,
+            "Followers": f"{random.randint(1000, 1000000):,}",
+            "Employees": f"{random.randint(100, 50000):,}",
+            "Industry": random.choice(["Technology", "Healthcare", "Finance", "Retail"]),
+            "Location": random.choice(["San Francisco, CA", "New York, NY", "London, UK", "Bangalore, India"]),
+            "Recent Posts": [
+                f"Excited to announce our new {random.choice(['AI-powered', 'blockchain-based', 'cloud-native'])} product!",
+                f"Join us at the {company_name} {random.choice(['conference', 'summit', 'hackathon'])} next month!",
+                f"We're hiring! Check out our open positions in {random.choice(['engineering', 'marketing', 'sales'])}."
+            ]
+        }
     
     # Display Mock Data
     st.subheader("Mock LinkedIn Insights")
@@ -149,6 +160,7 @@ if linkedin_url:
     For this demo, we're using mock data to simulate LinkedIn insights. 
     If you need real LinkedIn data, consider applying for LinkedIn's API access or using alternative tools like Clearbit or Crunchbase.
     """)
+
 # Option 2: Company Website URL
 st.subheader("Analyze Company Website")
 website_url = st.text_input("Enter Company Website URL")
