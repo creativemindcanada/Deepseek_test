@@ -12,7 +12,7 @@ nltk.download('vader_lexicon')
 # Title of the app
 st.title("B2B Customer Insights Dashboard")
 
-# Function to generate random B2B customer data
+# Function to generate random B2B customer data with specified units
 def generate_random_data():
     np.random.seed(42)
     data = {
@@ -62,6 +62,8 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     st.subheader("Basic Analysis")
     st.write(f"Total Customers: {len(data)}")
     st.write(f"Average Satisfaction Score: {data['satisfaction_score'].mean():.2f}")
+    st.write(f"Total Purchase Amount: ${data['purchase_amount'].sum():,.2f}")
+    st.write(f"Average Days Since Last Purchase: {data['last_purchase_days_ago'].mean():.2f} days")
 
     # Visualizations
     st.subheader("Customer Satisfaction Distribution")
@@ -133,6 +135,25 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     st.subheader("Customer Satisfaction by Industry")
     fig = px.bar(filtered_data, x="industry", y="satisfaction_score", color="industry", barmode="group")
     st.plotly_chart(fig)
+
+    # Add personalized insights for each "red" customer
+    st.subheader("Personalized Insights for High-Risk Customers")
+    high_risk_customers = data[data['churn_risk'] > 0.5]  # Customers with churn risk > 50%
+    
+    for index, row in high_risk_customers.iterrows():
+        st.markdown(f"### Customer ID: {row['company_id']}")
+        st.write(f"**Satisfaction Score:** {row['satisfaction_score']}")
+        st.write(f"**Feedback:** {row['feedback']}")
+        st.write(f"**Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+        st.write(f"**Purchase Amount:** ${row['purchase_amount']:,.2f}")
+        st.write(f"**Industry:** {row['industry']}")
+        st.write(f"**Company Size:** {row['company_size']}")
+        st.write(f"**Days Since Last Purchase:** {row['last_purchase_days_ago']} days")
+        
+        # Personalized recommendation
+        st.markdown("**Personalized Recommendation:**")
+        st.write("- **Immediate Action:** Contact the customer to understand their concerns and offer solutions.")
+        st.write("- **Long-Term Plan:** Develop a tailored engagement strategy based on their feedback and industry requirements.")
 
     # Add download button
     st.subheader("Download Analyzed Data")
