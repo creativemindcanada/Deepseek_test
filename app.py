@@ -92,16 +92,20 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Offer personalized discounts to retain high-risk customers.")
                 st.write("  - Improve delivery times in regions with high churn risk.")
                 
-                # Display Specific Customers
-                st.write("📋 **Specific High-Risk Customers:**")
-                for _, row in high_risk.iterrows():
-                    st.write(f"**Customer ID {row['customer_id']}**")
-                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                    st.write(f"- **Feedback:** {row['feedback']}")
-                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                    st.write(f"- **Region:** {row['region']}")
-                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
-                    st.write("---")
+                # Dropdown to select a specific customer
+                selected_customer = st.selectbox(
+                    "Select a High-Risk Customer to View Details",
+                    high_risk['customer_id'].tolist(),
+                    key="high_risk_customer"
+                )
+                # Display details of the selected customer
+                selected_customer_data = high_risk[high_risk['customer_id'] == selected_customer].iloc[0]
+                st.write(f"**Customer ID {selected_customer_data['customer_id']}**")
+                st.write(f"- **Satisfaction Score:** {selected_customer_data['satisfaction_score']}")
+                st.write(f"- **Feedback:** {selected_customer_data['feedback']}")
+                st.write(f"- **Total Spent:** ${selected_customer_data['total_spent']:,.2f}")
+                st.write(f"- **Region:** {selected_customer_data['region']}")
+                st.write(f"- **Churn Risk:** {selected_customer_data['churn_risk'] * 100:.2f}%")
             else:
                 st.write("No high-risk customers found.")
         
@@ -115,16 +119,20 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Conduct customer surveys to identify specific pain points.")
                 st.write("  - Launch a customer loyalty program.")
                 
-                # Display Specific Customers
-                st.write("📋 **Specific Medium-Risk Customers:**")
-                for _, row in medium_risk.iterrows():
-                    st.write(f"**Customer ID {row['customer_id']}**")
-                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                    st.write(f"- **Feedback:** {row['feedback']}")
-                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                    st.write(f"- **Region:** {row['region']}")
-                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
-                    st.write("---")
+                # Dropdown to select a specific customer
+                selected_customer = st.selectbox(
+                    "Select a Medium-Risk Customer to View Details",
+                    medium_risk['customer_id'].tolist(),
+                    key="medium_risk_customer"
+                )
+                # Display details of the selected customer
+                selected_customer_data = medium_risk[medium_risk['customer_id'] == selected_customer].iloc[0]
+                st.write(f"**Customer ID {selected_customer_data['customer_id']}**")
+                st.write(f"- **Satisfaction Score:** {selected_customer_data['satisfaction_score']}")
+                st.write(f"- **Feedback:** {selected_customer_data['feedback']}")
+                st.write(f"- **Total Spent:** ${selected_customer_data['total_spent']:,.2f}")
+                st.write(f"- **Region:** {selected_customer_data['region']}")
+                st.write(f"- **Churn Risk:** {selected_customer_data['churn_risk'] * 100:.2f}%")
             else:
                 st.write("No medium-risk customers found.")
         
@@ -138,16 +146,20 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Encourage low-risk customers to refer friends with a referral program.")
                 st.write("  - Upsell premium products to loyal customers.")
                 
-                # Display Specific Customers
-                st.write("📋 **Specific Low-Risk Customers:**")
-                for _, row in low_risk.iterrows():
-                    st.write(f"**Customer ID {row['customer_id']}**")
-                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                    st.write(f"- **Feedback:** {row['feedback']}")
-                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                    st.write(f"- **Region:** {row['region']}")
-                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
-                    st.write("---")
+                # Dropdown to select a specific customer
+                selected_customer = st.selectbox(
+                    "Select a Low-Risk Customer to View Details",
+                    low_risk['customer_id'].tolist(),
+                    key="low_risk_customer"
+                )
+                # Display details of the selected customer
+                selected_customer_data = low_risk[low_risk['customer_id'] == selected_customer].iloc[0]
+                st.write(f"**Customer ID {selected_customer_data['customer_id']}**")
+                st.write(f"- **Satisfaction Score:** {selected_customer_data['satisfaction_score']}")
+                st.write(f"- **Feedback:** {selected_customer_data['feedback']}")
+                st.write(f"- **Total Spent:** ${selected_customer_data['total_spent']:,.2f}")
+                st.write(f"- **Region:** {selected_customer_data['region']}")
+                st.write(f"- **Churn Risk:** {selected_customer_data['churn_risk'] * 100:.2f}%")
             else:
                 st.write("No low-risk customers found.")
     else:
@@ -163,16 +175,20 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Offer personalized discounts to retain high-risk customers.")
                 st.write("  - Improve delivery times in regions with high churn risk.")
                 
-                # Display Specific Customers
-                st.write("📋 **Specific High-Risk Customers:**")
-                for _, row in high_risk.iterrows():
-                    st.write(f"**Customer ID {row['customer_id']}**")
-                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                    st.write(f"- **Feedback:** {row['feedback']}")
-                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                    st.write(f"- **Region:** {row['region']}")
-                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
-                    st.write("---")
+                # Dropdown to select a specific customer
+                selected_customer = st.selectbox(
+                    "Select a High-Risk Customer to View Details",
+                    high_risk['customer_id'].tolist(),
+                    key="high_risk_customer"
+                )
+                # Display details of the selected customer
+                selected_customer_data = high_risk[high_risk['customer_id'] == selected_customer].iloc[0]
+                st.write(f"**Customer ID {selected_customer_data['customer_id']}**")
+                st.write(f"- **Satisfaction Score:** {selected_customer_data['satisfaction_score']}")
+                st.write(f"- **Feedback:** {selected_customer_data['feedback']}")
+                st.write(f"- **Total Spent:** ${selected_customer_data['total_spent']:,.2f}")
+                st.write(f"- **Region:** {selected_customer_data['region']}")
+                st.write(f"- **Churn Risk:** {selected_customer_data['churn_risk'] * 100:.2f}%")
             else:
                 st.write("No high-risk customers found.")
         
@@ -186,16 +202,20 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Conduct customer surveys to identify specific pain points.")
                 st.write("  - Launch a customer loyalty program.")
                 
-                # Display Specific Customers
-                st.write("📋 **Specific Medium-Risk Customers:**")
-                for _, row in medium_risk.iterrows():
-                    st.write(f"**Customer ID {row['customer_id']}**")
-                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                    st.write(f"- **Feedback:** {row['feedback']}")
-                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                    st.write(f"- **Region:** {row['region']}")
-                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
-                    st.write("---")
+                # Dropdown to select a specific customer
+                selected_customer = st.selectbox(
+                    "Select a Medium-Risk Customer to View Details",
+                    medium_risk['customer_id'].tolist(),
+                    key="medium_risk_customer"
+                )
+                # Display details of the selected customer
+                selected_customer_data = medium_risk[medium_risk['customer_id'] == selected_customer].iloc[0]
+                st.write(f"**Customer ID {selected_customer_data['customer_id']}**")
+                st.write(f"- **Satisfaction Score:** {selected_customer_data['satisfaction_score']}")
+                st.write(f"- **Feedback:** {selected_customer_data['feedback']}")
+                st.write(f"- **Total Spent:** ${selected_customer_data['total_spent']:,.2f}")
+                st.write(f"- **Region:** {selected_customer_data['region']}")
+                st.write(f"- **Churn Risk:** {selected_customer_data['churn_risk'] * 100:.2f}%")
             else:
                 st.write("No medium-risk customers found.")
         
@@ -209,16 +229,20 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Encourage low-risk customers to refer friends with a referral program.")
                 st.write("  - Upsell premium products to loyal customers.")
                 
-                # Display Specific Customers
-                st.write("📋 **Specific Low-Risk Customers:**")
-                for _, row in low_risk.iterrows():
-                    st.write(f"**Customer ID {row['customer_id']}**")
-                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                    st.write(f"- **Feedback:** {row['feedback']}")
-                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                    st.write(f"- **Region:** {row['region']}")
-                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
-                    st.write("---")
+                # Dropdown to select a specific customer
+                selected_customer = st.selectbox(
+                    "Select a Low-Risk Customer to View Details",
+                    low_risk['customer_id'].tolist(),
+                    key="low_risk_customer"
+                )
+                # Display details of the selected customer
+                selected_customer_data = low_risk[low_risk['customer_id'] == selected_customer].iloc[0]
+                st.write(f"**Customer ID {selected_customer_data['customer_id']}**")
+                st.write(f"- **Satisfaction Score:** {selected_customer_data['satisfaction_score']}")
+                st.write(f"- **Feedback:** {selected_customer_data['feedback']}")
+                st.write(f"- **Total Spent:** ${selected_customer_data['total_spent']:,.2f}")
+                st.write(f"- **Region:** {selected_customer_data['region']}")
+                st.write(f"- **Churn Risk:** {selected_customer_data['churn_risk'] * 100:.2f}%")
             else:
                 st.write("No low-risk customers found.")
 
