@@ -92,15 +92,16 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Offer personalized discounts to retain high-risk customers.")
                 st.write("  - Improve delivery times in regions with high churn risk.")
                 
-                # Nested Dropdown for Specific Customers
-                with st.expander("📋 View Specific High-Risk Customers"):
-                    for _, row in high_risk.iterrows():
-                        with st.expander(f"Customer ID {row['customer_id']}"):
-                            st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                            st.write(f"- **Feedback:** {row['feedback']}")
-                            st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                            st.write(f"- **Region:** {row['region']}")
-                            st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                # Display Specific Customers
+                st.write("📋 **Specific High-Risk Customers:**")
+                for _, row in high_risk.iterrows():
+                    st.write(f"**Customer ID {row['customer_id']}**")
+                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
+                    st.write(f"- **Feedback:** {row['feedback']}")
+                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
+                    st.write(f"- **Region:** {row['region']}")
+                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                    st.write("---")
             else:
                 st.write("No high-risk customers found.")
         
@@ -114,15 +115,16 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Conduct customer surveys to identify specific pain points.")
                 st.write("  - Launch a customer loyalty program.")
                 
-                # Nested Dropdown for Specific Customers
-                with st.expander("📋 View Specific Medium-Risk Customers"):
-                    for _, row in medium_risk.iterrows():
-                        with st.expander(f"Customer ID {row['customer_id']}"):
-                            st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                            st.write(f"- **Feedback:** {row['feedback']}")
-                            st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                            st.write(f"- **Region:** {row['region']}")
-                            st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                # Display Specific Customers
+                st.write("📋 **Specific Medium-Risk Customers:**")
+                for _, row in medium_risk.iterrows():
+                    st.write(f"**Customer ID {row['customer_id']}**")
+                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
+                    st.write(f"- **Feedback:** {row['feedback']}")
+                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
+                    st.write(f"- **Region:** {row['region']}")
+                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                    st.write("---")
             else:
                 st.write("No medium-risk customers found.")
         
@@ -136,15 +138,16 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Encourage low-risk customers to refer friends with a referral program.")
                 st.write("  - Upsell premium products to loyal customers.")
                 
-                # Nested Dropdown for Specific Customers
-                with st.expander("📋 View Specific Low-Risk Customers"):
-                    for _, row in low_risk.iterrows():
-                        with st.expander(f"Customer ID {row['customer_id']}"):
-                            st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                            st.write(f"- **Feedback:** {row['feedback']}")
-                            st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                            st.write(f"- **Region:** {row['region']}")
-                            st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                # Display Specific Customers
+                st.write("📋 **Specific Low-Risk Customers:**")
+                for _, row in low_risk.iterrows():
+                    st.write(f"**Customer ID {row['customer_id']}**")
+                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
+                    st.write(f"- **Feedback:** {row['feedback']}")
+                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
+                    st.write(f"- **Region:** {row['region']}")
+                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                    st.write("---")
             else:
                 st.write("No low-risk customers found.")
     else:
@@ -160,15 +163,16 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Offer personalized discounts to retain high-risk customers.")
                 st.write("  - Improve delivery times in regions with high churn risk.")
                 
-                # Nested Dropdown for Specific Customers
-                with st.expander("📋 View Specific High-Risk Customers"):
-                    for _, row in high_risk.iterrows():
-                        with st.expander(f"Customer ID {row['customer_id']}"):
-                            st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                            st.write(f"- **Feedback:** {row['feedback']}")
-                            st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                            st.write(f"- **Region:** {row['region']}")
-                            st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                # Display Specific Customers
+                st.write("📋 **Specific High-Risk Customers:**")
+                for _, row in high_risk.iterrows():
+                    st.write(f"**Customer ID {row['customer_id']}**")
+                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
+                    st.write(f"- **Feedback:** {row['feedback']}")
+                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
+                    st.write(f"- **Region:** {row['region']}")
+                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                    st.write("---")
             else:
                 st.write("No high-risk customers found.")
         
@@ -182,15 +186,16 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Conduct customer surveys to identify specific pain points.")
                 st.write("  - Launch a customer loyalty program.")
                 
-                # Nested Dropdown for Specific Customers
-                with st.expander("📋 View Specific Medium-Risk Customers"):
-                    for _, row in medium_risk.iterrows():
-                        with st.expander(f"Customer ID {row['customer_id']}"):
-                            st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                            st.write(f"- **Feedback:** {row['feedback']}")
-                            st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                            st.write(f"- **Region:** {row['region']}")
-                            st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                # Display Specific Customers
+                st.write("📋 **Specific Medium-Risk Customers:**")
+                for _, row in medium_risk.iterrows():
+                    st.write(f"**Customer ID {row['customer_id']}**")
+                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
+                    st.write(f"- **Feedback:** {row['feedback']}")
+                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
+                    st.write(f"- **Region:** {row['region']}")
+                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                    st.write("---")
             else:
                 st.write("No medium-risk customers found.")
         
@@ -204,15 +209,16 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
                 st.write("  - Encourage low-risk customers to refer friends with a referral program.")
                 st.write("  - Upsell premium products to loyal customers.")
                 
-                # Nested Dropdown for Specific Customers
-                with st.expander("📋 View Specific Low-Risk Customers"):
-                    for _, row in low_risk.iterrows():
-                        with st.expander(f"Customer ID {row['customer_id']}"):
-                            st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
-                            st.write(f"- **Feedback:** {row['feedback']}")
-                            st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
-                            st.write(f"- **Region:** {row['region']}")
-                            st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                # Display Specific Customers
+                st.write("📋 **Specific Low-Risk Customers:**")
+                for _, row in low_risk.iterrows():
+                    st.write(f"**Customer ID {row['customer_id']}**")
+                    st.write(f"- **Satisfaction Score:** {row['satisfaction_score']}")
+                    st.write(f"- **Feedback:** {row['feedback']}")
+                    st.write(f"- **Total Spent:** ${row['total_spent']:,.2f}")
+                    st.write(f"- **Region:** {row['region']}")
+                    st.write(f"- **Churn Risk:** {row['churn_risk'] * 100:.2f}%")
+                    st.write("---")
             else:
                 st.write("No low-risk customers found.")
 
