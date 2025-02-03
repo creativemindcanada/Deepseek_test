@@ -298,8 +298,13 @@ st.subheader("Analyze Company Website")
 website_url = st.text_input("Enter Company Website URL", key="website_url_input")
 if website_url:
     st.write(f"Fetching insights for website: {website_url}")
-    st.warning("Website analysis is not implemented in this demo.")
-
+    analysis_result = analyze_website(website_url)
+    if analysis_result["status"] == "Success":
+        st.write(f"- **Title:** {analysis_result['title']}")
+        st.write(f"- **Description:** {analysis_result['description']}")
+        st.write(f"- **Number of Links:** {analysis_result['num_links']}")
+    else:
+        st.error(f"Failed to analyze website: {analysis_result['message']}")
 # Power BI
 st.subheader("Analyze Power BI Data")
 powerbi_url = st.text_input("Enter Power BI Sharable URL", key="powerbi_url_input")
