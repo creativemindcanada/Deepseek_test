@@ -34,17 +34,29 @@ def generate_random_data():
     }
     return pd.DataFrame(data)
 
-def predict_churn(data):
-    required_columns = ['satisfaction_score', 'purchase_amount', 'total_spent']
-    if all(column in data.columns for column in required_columns):
-        X = data[required_columns]
-        y = (data['satisfaction_score'] < 3).astype(int)  # Churn if satisfaction < 3
-        model = LogisticRegression()
-        model.fit(X, y)
-        data['churn_risk'] = model.predict_proba(X)[:, 1]  # Probability of churn
+# Display current dashboard
+if 'data' in st.session_state and st.session_state['data'] is not None:
+    data = st.session_state['data']
+
+    # Ensure 'total_spent' column is present
+    if 'total_spent' not in data.columns:
+        st.error("Missing required column: 'total_spent'")
     else:
-        st.error(f"Missing required columns: {set(required_columns) - set(data.columns)}")
-    return data
+        # Predict churn risk
+        data = predict_churn(data)  # Add this line to ensure churn_risk column exists
+
+        # Display raw data
+        st.subheader("Raw Data")
+        st.write(data)
+
+        # Basic Analysis
+        st.subheader("Basic Analysis")
+        st.write(f"Total Customers: {len(data)}")
+        st.write(f"Average Satisfaction Score: {data['satisfaction_score'].mean():.2f}")
+        st.write(f"Total Revenue: ${data['total_spent'].sum():,.2f}")
+
+        # Visualizations and other code continue as before
+
 
 # Upload customer data
 uploaded_file = st.file_uploader("Upload your customer data (CSV file)", type=["csv"])
