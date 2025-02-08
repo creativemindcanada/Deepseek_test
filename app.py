@@ -1,4 +1,5 @@
 import streamlit as st
+import requests
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -293,18 +294,37 @@ if linkedin_url:
     st.write(f"Fetching insights for LinkedIn URL: {linkedin_url}")
     st.warning("LinkedIn API integration is not implemented in this demo.")
 
-# Company Website
+# Function to analyze website performance using Google PageSpeed Insights API
+def analyze_website(website_url, api_key):
+    url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website_url}&key={api_key}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error(f"Failed to fetch website data. Status code: {response.status_code}")
+        return None
+
+# In the Company Website section
 st.subheader("Analyze Company Website")
 website_url = st.text_input("Enter Company Website URL", key="website_url_input")
 if website_url:
-    st.write(f"Fetching insights for website: {website_url}")
-    analysis_result = analyze_website(website_url)
-    if analysis_result["status"] == "Success":
-        st.write(f"- **Title:** {analysis_result['title']}")
-        st.write(f"- **Description:** {analysis_result['description']}")
-        st.write(f"- **Number of Links:** {analysis_result['num_links']}")
+    api_key = "AIzaSyDyC_h2_dQiVJEOpXdPlob1lX0Sfb2UTlI"  # Replace with your actual API key
+    website_data = analyze_website(website_url, api_key)
+    
+    if website_data:
+        st.write(f"Fetching insights for website: {website_url}")
+        
+        # Display performance metrics
+        st.subheader("Website Performance Metrics")
+        st.write(f"- **Performance Score:** {website_data['lighthouseResult']['categories']['performance']['score'] * 100:.2f}%")
+        st.write(f"- **First Contentful Paint:** {website_data['lighthouseResult']['audits']['first-contentful-paint']['displayValue']}")
+        st.write(f"- **Time to Interactive:** {website_data['lighthouseResult']['audits']['interactive']['displayValue']}")
+        st.write(f"- **Speed Index:** {website_data['lighthouseResult']['audits']['speed-index']['displayValue']}")
     else:
-        st.error(f"Failed to analyze website: {analysis_result['message']}")
+        st.warning("Failed to analyze the website. Please check the URL or try again later.")
+else:
+    st.warning("Please enter a valid website URL.")
+
 # Power BI
 st.subheader("Analyze Power BI Data")
 powerbi_url = st.text_input("Enter Power BI Sharable URL", key="powerbi_url_input")
