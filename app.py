@@ -34,13 +34,16 @@ def generate_random_data():
     }
     return pd.DataFrame(data)
 
-# Function to predict churn risk
 def predict_churn(data):
-    X = data[['satisfaction_score', 'purchase_amount', 'total_spent']]
-    y = (data['satisfaction_score'] < 3).astype(int)  # Churn if satisfaction < 3
-    model = LogisticRegression()
-    model.fit(X, y)
-    data['churn_risk'] = model.predict_proba(X)[:, 1]  # Probability of churn
+    required_columns = ['satisfaction_score', 'purchase_amount', 'total_spent']
+    if all(column in data.columns for column in required_columns):
+        X = data[required_columns]
+        y = (data['satisfaction_score'] < 3).astype(int)  # Churn if satisfaction < 3
+        model = LogisticRegression()
+        model.fit(X, y)
+        data['churn_risk'] = model.predict_proba(X)[:, 1]  # Probability of churn
+    else:
+        st.error(f"Missing required columns: {set(required_columns) - set(data.columns)}")
     return data
 
 # Upload customer data
