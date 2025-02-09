@@ -36,6 +36,7 @@ def generate_random_data():
 
 # Function to predict churn risk
 def predict_churn(data):
+    # Check if required columns exist
     required_columns = ['satisfaction_score', 'purchase_amount', 'total_spent']
     if all(column in data.columns for column in required_columns):
         X = data[required_columns]
@@ -47,6 +48,11 @@ def predict_churn(data):
         st.warning("Required columns for churn prediction are missing. Using default churn risk of 0.")
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
+
+# In the dashboard section, call predict_churn only if data is available
+if 'data' in st.session_state and st.session_state['data'] is not None:
+    data = st.session_state['data']
+    data = predict_churn(data)  # Ensure churn_risk column exists
 
 # Function to ensure necessary columns with default values if missing
 def ensure_columns(data):
@@ -199,3 +205,23 @@ st.subheader("Analyze Company Website")
 website_url = st.text_input("Enter Company Website URL", key="website_url_input")
 if website_url:
     api_key = "AIzaSyDyC_h2_dQiVJEOpXdPlob1lX0Sfb2UTlI"  # Replace with your actual API key
+    st.write(f"Fetching insights for website: {website_url}")
+    website_data = analyze_website(website_url, api_key)
+    
+    if website_data:
+        # Display performance metrics
+        st.subheader("Website Performance Metrics")
+        st.write(f"- **Performance Score:** {website_data['lighthouseResult']['categories']['performance']['score'] * 100:.2f}%")
+        st.write(f"- **First Contentful Paint:** {website_data['lighthouseResult']['audits']['first-contentful-paint']['displayValue']}")
+        st.write(f"- **Time to Interactive:** {website_data['lighthouseResult']['audits']['interactive']['displayValue']}")
+        st.write(f"- **Speed Index:** {website_data['lighthouseResult']['audits']['speed-index']['displayValue']}")
+    else:
+        st.warning("Failed to analyze the website. Displaying mock data for demonstration purposes.")
+        # Mock data for demo purposes
+        st.subheader("Website Performance Metrics (Mock Data)")
+        st.write("- **Performance Score:** 85.00%")
+        st.write("- **First Contentful Paint:** 1.5s")
+        st.write("- **Time to Interactive:** 3.2s")
+        st.write("- **Speed Index:** 2.8s")
+else:
+    st.warning("Please enter a valid website URL.")
