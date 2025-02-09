@@ -12,22 +12,23 @@ import time  # Import time module for sleep
 
 # ---- CACHING FUNCTIONS ----
 @st.cache_data
-def load_data(uploaded_file, encoding='utf-8'):
-    """Loads data from a CSV file with specified encoding."""
-    try:
-        df = pd.read_csv(uploaded_file, encoding=encoding)
-        return df
-    except UnicodeDecodeError as e:
-        st.error(f"Error loading data with encoding '{encoding}': {e}.  Trying 'latin1'...")
+def load_data(uploaded_file):
+    """Loads data from a CSV file with encoding detection."""
+    encodings_to_try = ['utf-8', 'latin1', 'cp1252', 'ISO-8859-1']  # Add more if needed [1]
+
+    for encoding in encodings_to_try:
         try:
-            df = pd.read_csv(uploaded_file, encoding='latin1')
+            df = pd.read_csv(uploaded_file, encoding=encoding)
+            st.info(f"Successfully loaded data with encoding: {encoding}")
             return df
-        except Exception as e2:
-            st.error(f"Error loading data with encoding 'latin1': {e2}.  Please try a different encoding or ensure the file is properly encoded.")
+        except UnicodeDecodeError as e:
+            st.warning(f"Error loading data with encoding '{encoding}': {e}")
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
             return None
-    except Exception as e:
-        st.error(f"Error loading data: {e}")
-        return None
+
+    st.error("Failed to load data with multiple encodings. Please ensure the file is properly encoded.")
+    return None
 
 
 @st.cache_data
