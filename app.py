@@ -9,13 +9,30 @@ import nltk
 from datetime import datetime, timedelta
 import io  # Import the io module
 import time  # Import time module for sleep
+import chardet
+import streamlit as st
+import pandas as pd
 
 # ---- CACHING FUNCTIONS ----
 @st.cache_data
 def load_data(uploaded_file):
     """Loads data from a CSV file with encoding detection."""
-    encodings_to_try = ['utf-8', 'latin1', 'cp1252', 'ISO-8859-1']  # Add more if needed [1]
+    try:
+        # Use chardet to detect the file encoding
+        raw_data = uploaded_file.read()
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
 
+        st.write(f"Detected encoding: {encoding}")
+
+        # Try to read the CSV file using the detected encoding
+        uploaded_file.seek(0)  # Reset file pointer to the beginning [1]
+        df = pd.read_csv(uploaded_file, encoding=encoding)
+        st.info(f"Successfully loaded data with encoding: {encoding}")
+        return df
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {e}")
+        return None
     for encoding in encodings_to_try:
         try:
             df = pd.read_csv(uploaded_file, encoding=encoding)
