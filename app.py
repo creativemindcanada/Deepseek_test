@@ -12,14 +12,23 @@ import time  # Import time module for sleep
 
 # ---- CACHING FUNCTIONS ----
 @st.cache_data
-def load_data(uploaded_file):
-    """Loads data from a CSV file."""
+def load_data(uploaded_file, encoding='utf-8'):
+    """Loads data from a CSV file with specified encoding."""
     try:
-        df = pd.read_csv(uploaded_file)
+        df = pd.read_csv(uploaded_file, encoding=encoding)
         return df
+    except UnicodeDecodeError as e:
+        st.error(f"Error loading data with encoding '{encoding}': {e}.  Trying 'latin1'...")
+        try:
+            df = pd.read_csv(uploaded_file, encoding='latin1')
+            return df
+        except Exception as e2:
+            st.error(f"Error loading data with encoding 'latin1': {e2}.  Please try a different encoding or ensure the file is properly encoded.")
+            return None
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return None
+
 
 @st.cache_data
 def generate_random_data(num_customers=100):
@@ -42,10 +51,12 @@ def generate_random_data(num_customers=100):
     }
     return pd.DataFrame(data)
 
+
 @st.cache_resource
 def load_sentiment_analyzer():
     """Loads the VADER sentiment analyzer."""
     return SentimentIntensityAnalyzer()
+
 
 # ---- PREPROCESSING FUNCTIONS ----
 def ensure_columns(data):
@@ -54,6 +65,7 @@ def ensure_columns(data):
         data['total_spent'] = 0
     data['total_spent'] = data['total_spent'].fillna(0)  # Fill NaN values with 0
     return data
+
 
 def preprocess_data(data):
     """Handles data type conversions and missing values."""
@@ -74,6 +86,7 @@ def preprocess_data(data):
                     data[col].mode()[0])  # Fill others with mode (most frequent value)
     return data
 
+
 # ---- CHURN PREDICTION ----
 def predict_churn(data):
     """Predicts customer churn risk using Logistic Regression."""
@@ -89,6 +102,7 @@ def predict_churn(data):
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
 
+
 # ---- SENTIMENT ANALYSIS ----
 def analyze_sentiment(text, sia):
     """Analyzes the sentiment of a given text."""
@@ -96,6 +110,7 @@ def analyze_sentiment(text, sia):
         return sia.polarity_scores(text)['compound']
     except TypeError:
         return 0  # Handle potential errors with non-string inputs
+
 
 # ---- GOOGLE PAGESPEED INSIGHTS API ----
 @st.cache_data(ttl=3600)  # Cache the API response for 1 hour
@@ -119,6 +134,7 @@ def analyze_website(website_url, api_key, retry_count=3):
 
     st.error("Failed to analyze the website after multiple retries.")
     return None
+
 
 # ---- MAIN DASHBOARD ----
 def main():
@@ -293,6 +309,7 @@ def main():
                 st.write("- **Speed Index:** 2.8s")
     else:
         st.warning("Please enter a valid website URL.")
+
 
 if __name__ == "__main__":
     main()
