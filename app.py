@@ -189,11 +189,15 @@ if linkedin_url:
 # Function to analyze website performance using Google PageSpeed Insights API
 def analyze_website(website_url, api_key):
     url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website_url}&key={api_key}"
-    response = requests.get(url)
-    if response.status_code == 200:
+    try:
+        response = requests.get(url, timeout=10)  # Add a timeout for the request
+        response.raise_for_status()  # Raise an HTTPError for bad responses
         return response.json()
-    else:
-        st.error(f"Failed to fetch website data. Status code: {response.status_code}")
+    except requests.exceptions.Timeout:
+        st.error("The request to the PageSpeed API timed out. Please try again later.")
+        return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred while fetching website data: {e}")
         return None
 
 # In the Company Website section
@@ -201,10 +205,17 @@ st.subheader("Analyze Company Website")
 website_url = st.text_input("Enter Company Website URL", key="website_url_input")
 if website_url:
     api_key = "AIzaSyDyC_h2_dQiVJEOpXdPlob1lX0Sfb2UTlI"  # Replace with your actual API key
+    st.write(f"Fetching insights for website: {website_url}")
     website_data = analyze_website(website_url, api_key)
     
     if website_data:
-        st.write(f"Fetching insights for website: {website_url}")
-        # Process and display website_data here
+        # Display performance metrics
+        st.subheader("Website Performance Metrics")
+        st.write(f"- **Performance Score:** {website_data['lighthouseResult']['categories']['performance']['score'] * 100:.2f}%")
+        st.write(f"- **First Contentful Paint:** {website_data['lighthouseResult']['audits']['first-contentful-paint']['displayValue']}")
+        st.write(f"- **Time to Interactive:** {website_data['lighthouseResult']['audits']['interactive']['displayValue']}")
+        st.write(f"- **Speed Index:** {website_data['lighthouseResult']['audits']['speed-index']['displayValue']}")
     else:
-        st.warning("No results were returned for the provided URL.")
+        st.warning("Failed to analyze the website. Please check the URL or try again later.")
+else:
+    st.warning("Please enter a valid website URL.")
