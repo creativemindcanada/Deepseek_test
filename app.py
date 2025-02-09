@@ -9,9 +9,8 @@ import nltk
 from datetime import datetime, timedelta
 import io  # Import the io module
 import time  # Import time module for sleep
-import chardet
-import streamlit as st
-import pandas as pd
+import chardet  # Import chardet
+
 
 # ---- CACHING FUNCTIONS ----
 @st.cache_data
@@ -33,19 +32,6 @@ def load_data(uploaded_file):
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
         return None
-    for encoding in encodings_to_try:
-        try:
-            df = pd.read_csv(uploaded_file, encoding=encoding)
-            st.info(f"Successfully loaded data with encoding: {encoding}")
-            return df
-        except UnicodeDecodeError as e:
-            st.warning(f"Error loading data with encoding '{encoding}': {e}")
-        except Exception as e:
-            st.error(f"An unexpected error occurred: {e}")
-            return None
-
-    st.error("Failed to load data with multiple encodings. Please ensure the file is properly encoded.")
-    return None
 
 
 @st.cache_data
