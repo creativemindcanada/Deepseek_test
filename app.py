@@ -36,6 +36,7 @@ def generate_random_data():
 
 # Function to predict churn risk
 def predict_churn(data):
+    # Check if required columns exist
     required_columns = ['satisfaction_score', 'purchase_amount', 'total_spent']
     if all(column in data.columns for column in required_columns):
         X = data[required_columns]
@@ -44,8 +45,14 @@ def predict_churn(data):
         model.fit(X, y)
         data['churn_risk'] = model.predict_proba(X)[:, 1]  # Probability of churn
     else:
-        st.error(f"Missing required columns: {set(required_columns) - set(data.columns)}")
+        st.warning("Required columns for churn prediction are missing. Using default churn risk of 0.")
+        data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
+
+# In the dashboard section, call predict_churn only if data is available
+if 'data' in st.session_state and st.session_state['data'] is not None:
+    data = st.session_state['data']
+    data = predict_churn(data)  # Ensure churn_risk column exists
 
 # Function to ensure necessary columns with default values if missing
 def ensure_columns(data):
