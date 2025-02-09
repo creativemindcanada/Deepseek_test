@@ -205,4 +205,6 @@ if website_url:
     
     if website_data:
         st.write(f"Fetching insights for website: {website_url}")
-        
+        # Process and display website_data here
+    else:
+        st.warning("No results were returned for the provided URL.")
