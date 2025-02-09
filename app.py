@@ -9,30 +9,17 @@ import nltk
 from datetime import datetime, timedelta
 import io  # Import the io module
 import time  # Import time module for sleep
-import chardet  # Import chardet
-
 
 # ---- CACHING FUNCTIONS ----
 @st.cache_data
 def load_data(uploaded_file):
-    """Loads data from a CSV file with encoding detection."""
+    """Loads data from a CSV file."""
     try:
-        # Use chardet to detect the file encoding
-        raw_data = uploaded_file.read()
-        result = chardet.detect(raw_data)
-        encoding = result['encoding']
-
-        st.write(f"Detected encoding: {encoding}")
-
-        # Try to read the CSV file using the detected encoding
-        uploaded_file.seek(0)  # Reset file pointer to the beginning [1]
-        df = pd.read_csv(uploaded_file, encoding=encoding)
-        st.info(f"Successfully loaded data with encoding: {encoding}")
+        df = pd.read_csv(uploaded_file)
         return df
     except Exception as e:
-        st.error(f"An unexpected error occurred: {e}")
+        st.error(f"Error loading data: {e}")
         return None
-
 
 @st.cache_data
 def generate_random_data(num_customers=100):
@@ -55,12 +42,10 @@ def generate_random_data(num_customers=100):
     }
     return pd.DataFrame(data)
 
-
 @st.cache_resource
 def load_sentiment_analyzer():
     """Loads the VADER sentiment analyzer."""
     return SentimentIntensityAnalyzer()
-
 
 # ---- PREPROCESSING FUNCTIONS ----
 def ensure_columns(data):
@@ -69,7 +54,6 @@ def ensure_columns(data):
         data['total_spent'] = 0
     data['total_spent'] = data['total_spent'].fillna(0)  # Fill NaN values with 0
     return data
-
 
 def preprocess_data(data):
     """Handles data type conversions and missing values."""
@@ -90,7 +74,6 @@ def preprocess_data(data):
                     data[col].mode()[0])  # Fill others with mode (most frequent value)
     return data
 
-
 # ---- CHURN PREDICTION ----
 def predict_churn(data):
     """Predicts customer churn risk using Logistic Regression."""
@@ -106,7 +89,6 @@ def predict_churn(data):
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
 
-
 # ---- SENTIMENT ANALYSIS ----
 def analyze_sentiment(text, sia):
     """Analyzes the sentiment of a given text."""
@@ -114,7 +96,6 @@ def analyze_sentiment(text, sia):
         return sia.polarity_scores(text)['compound']
     except TypeError:
         return 0  # Handle potential errors with non-string inputs
-
 
 # ---- GOOGLE PAGESPEED INSIGHTS API ----
 @st.cache_data(ttl=3600)  # Cache the API response for 1 hour
@@ -138,7 +119,6 @@ def analyze_website(website_url, api_key, retry_count=3):
 
     st.error("Failed to analyze the website after multiple retries.")
     return None
-
 
 # ---- MAIN DASHBOARD ----
 def main():
@@ -186,7 +166,7 @@ def main():
             st.error("There are issues to address.")
 
         # ---- RISK SEGMENTATION ----
-        with st.expander("🔴 High Risk Customers"):
+        with st.expander("?? High Risk Customers"):
             high_risk = data[data['churn_risk'] > 0.7]
             if not high_risk.empty:
                 st.write(f"- **Number of High-Risk Customers:** {len(high_risk)}")
@@ -197,7 +177,7 @@ def main():
             else:
                 st.write("No high-risk customers found.")
 
-        with st.expander("🟠 Medium Risk Customers"):
+        with st.expander("?? Medium Risk Customers"):
             medium_risk = data[(data['churn_risk'] > 0.4) & (data['churn_risk'] <= 0.7)]
             if not medium_risk.empty:
                 st.write(f"- **Number of Medium-Risk Customers:** {len(medium_risk)}")
@@ -208,7 +188,7 @@ def main():
             else:
                 st.write("No medium-risk customers found.")
 
-        with st.expander("🟢 Low Risk Customers"):
+        with st.expander("?? Low Risk Customers"):
             low_risk = data[data['churn_risk'] <= 0.4]
             if not low_risk.empty:
                 st.write(f"- **Number of Low-Risk Customers:** {len(low_risk)}")
@@ -313,7 +293,6 @@ def main():
                 st.write("- **Speed Index:** 2.8s")
     else:
         st.warning("Please enter a valid website URL.")
-
 
 if __name__ == "__main__":
     main()
