@@ -216,6 +216,12 @@ if website_url:
         st.write(f"- **Time to Interactive:** {website_data['lighthouseResult']['audits']['interactive']['displayValue']}")
         st.write(f"- **Speed Index:** {website_data['lighthouseResult']['audits']['speed-index']['displayValue']}")
     else:
-        st.warning("Failed to analyze the website. Please check the URL or try again later.")
+        st.warning("Failed to analyze the website. Displaying mock data for demonstration purposes.")
+        # Mock data for demo purposes
+        st.subheader("Website Performance Metrics (Mock Data)")
+        st.write("- **Performance Score:** 85.00%")
+        st.write("- **First Contentful Paint:** 1.5s")
+        st.write("- **Time to Interactive:** 3.2s")
+        st.write("- **Speed Index:** 2.8s")
 else:
     st.warning("Please enter a valid website URL.")
