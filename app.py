@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -179,6 +180,62 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
 else:
     st.info("Please upload a CSV file or click the button to use randomly generated data.")
 
+# Function to analyze website URL and provide strategies
+def analyze_website_url(website_url):
+    try:
+        # Fetch the website content
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        response = requests.get(website_url, headers=headers, timeout=10)
+        response.raise_for_status()  # Raise an error for bad responses (4xx, 5xx)
+
+        # Parse the website content using BeautifulSoup
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Extract key sections
+        st.subheader("Strategies Based on Website Analysis")
+
+        # 1. Products/Services
+        products_services = soup.find_all(text=lambda text: "product" in text.lower() or "service" in text.lower())
+        if products_services:
+            st.write("- **Products/Services:** Focus on promoting high-margin products and bundling services to increase average order value.")
+        else:
+            st.write("- **Products/Services:** No specific product or service information found. Consider adding a dedicated 'Products' or 'Services' page.")
+
+        # 2. Customer Success Stories
+        success_stories = soup.find_all(text=lambda text: "success" in text.lower() or "testimonial" in text.lower())
+        if success_stories:
+            st.write("- **Customer Success Stories:** Leverage positive customer testimonials in marketing campaigns to build trust and credibility.")
+        else:
+            st.write("- **Customer Success Stories:** No customer success stories found. Consider adding a 'Testimonials' or 'Case Studies' section.")
+
+        # 3. Blog/Resources
+        blog_resources = soup.find_all(text=lambda text: "blog" in text.lower() or "resources" in text.lower())
+        if blog_resources:
+            st.write("- **Blog/Resources:** Create content that addresses common customer pain points to drive organic traffic and engagement.")
+        else:
+            st.write("- **Blog/Resources:** No blog or resources section found. Consider adding a blog to share valuable insights and updates.")
+
+        # 4. About Us
+        about_us = soup.find_all(text=lambda text: "about" in text.lower() and "us" in text.lower())
+        if about_us:
+            st.write("- **About Us:** Highlight company values and mission to connect with customers on a personal level.")
+        else:
+            st.write("- **About Us:** No 'About Us' section found. Consider adding a section to share your company's story and values.")
+
+        # 5. Contact Us
+        contact_us = soup.find_all(text=lambda text: "contact" in text.lower() and "us" in text.lower())
+        if contact_us:
+            st.write("- **Contact Us:** Ensure easy access to customer support to improve customer satisfaction and retention.")
+        else:
+            st.write("- **Contact Us:** No 'Contact Us' section found. Consider adding a contact form or support details.")
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred while fetching the website: {e}")
+    except Exception as e:
+        st.error(f"An error occurred during analysis: {e}")
+
 # Secondary Inputs
 st.header("Secondary Input Methods")
 
@@ -188,20 +245,6 @@ linkedin_url = st.text_input("Enter Company LinkedIn URL", key="linkedin_url_inp
 if linkedin_url:
     st.write(f"Fetching insights for LinkedIn URL: {linkedin_url}")
     st.warning("LinkedIn API integration is not implemented in this demo.")
-
-# Function to analyze website URL and provide strategies
-def analyze_website_url(website_url):
-    # Placeholder function to simulate analysis
-    # In a real implementation, this would involve web scraping or API calls to analyze the website content
-    st.write(f"Analyzing website: {website_url}")
-    
-    # Simulated analysis based on common website sections
-    st.subheader("Strategies Based on Website Analysis")
-    st.write("- **Products/Services:** Focus on promoting high-margin products and bundling services to increase average order value.")
-    st.write("- **Customer Success Stories:** Leverage positive customer testimonials in marketing campaigns to build trust and credibility.")
-    st.write("- **Blog/Resources:** Create content that addresses common customer pain points to drive organic traffic and engagement.")
-    st.write("- **About Us:** Highlight company values and mission to connect with customers on a personal level.")
-    st.write("- **Contact Us:** Ensure easy access to customer support to improve customer satisfaction and retention.")
 
 # In the Company Website section
 st.subheader("Analyze Company Website URL")
