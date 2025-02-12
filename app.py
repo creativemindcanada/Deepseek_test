@@ -124,7 +124,7 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     # Low Risk
     with st.expander("🟢 Low Risk Customers"):
         low_risk = data[data['churn_risk'] <= 0.4]
-        if not low_risk empty:
+        if not low_risk.empty:
             st.write(f"- **Number of Low-Risk Customers:** {len(low_risk)}")
             st.write("- **Key Strengths:** High satisfaction scores, positive feedback.")
             st.write("- **Recommendations:**")
@@ -202,7 +202,4 @@ if website_url:
     website_analysis = analyze_website(website_url, api_key)
     if website_analysis:
         st.subheader("Website Analysis Report")
-        st.write("Based on the analysis of the website of ParkourSC, here are the key findings:")
-        
-        # Example output generated with website analysis
-        st.markdown
+        st.write("Based on the analysis of the website of ParkourSC, here are the key findings
