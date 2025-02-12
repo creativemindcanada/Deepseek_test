@@ -239,8 +239,13 @@ def generate_ai_report(extracted_content):
         4. **Strategies:** Provide actionable strategies to enhance the website's effectiveness.
         """
 
+        # Truncate the prompt if it exceeds the model's maximum context length
+        max_context_length = 2048  # Adjust based on the model's context window
+        if len(prompt) > max_context_length:
+            prompt = prompt[:max_context_length]
+
         # Generate the report using the AI model
-        report = generator(prompt, max_length=500, num_return_sequences=1)[0]["generated_text"]
+        report = generator(prompt, max_new_tokens=500, num_return_sequences=1)[0]["generated_text"]
         return report
 
     except Exception as e:
