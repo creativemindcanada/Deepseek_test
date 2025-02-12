@@ -111,12 +111,10 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
         high_risk = data[data['churn_risk'] > 0.7]
         if not high_risk.empty:
             st.write(f"- **Number of High-Risk Customers:** {len(high_risk)}")
-            for customer in high_risk['customer_id'].unique():
-                with st.expander(f"Customer ID: {customer}"):
-                    st.write("- **Key Issues:** Poor packaging, delayed delivery.")
-                    st.write("- **Recommendations:**")
-                    st.write("  - Offer personalized discounts to retain this customer.")
-                    st.write("  - Improve delivery times for this region.")
+            st.write("- **Key Issues:** Poor packaging, delayed delivery.")
+            st.write("- **Recommendations:**")
+            st.write("  - Offer personalized discounts to retain high-risk customers.")
+            st.write("  - Improve delivery times in regions with high churn risk.")
         else:
             st.write("No high-risk customers found.")
     
@@ -125,12 +123,10 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
         medium_risk = data[(data['churn_risk'] > 0.4) & (data['churn_risk'] <= 0.7)]
         if not medium_risk.empty:
             st.write(f"- **Number of Medium-Risk Customers:** {len(medium_risk)}")
-            for customer in medium_risk['customer_id'].unique():
-                with st.expander(f"Customer ID: {customer}"):
-                    st.write("- **Key Issues:** Mixed feedback on product quality.")
-                    st.write("- **Recommendations:**")
-                    st.write("  - Conduct a survey to identify specific pain points for this customer.")
-                    st.write("  - Offer a loyalty program discount.")
+            st.write("- **Key Issues:** Mixed feedback on product quality.")
+            st.write("- **Recommendations:**")
+            st.write("  - Conduct customer surveys to identify specific pain points.")
+            st.write("  - Launch a customer loyalty program.")
         else:
             st.write("No medium-risk customers found.")
     
@@ -139,12 +135,10 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
         low_risk = data[data['churn_risk'] <= 0.4]
         if not low_risk.empty:
             st.write(f"- **Number of Low-Risk Customers:** {len(low_risk)}")
-            for customer in low_risk['customer_id'].unique():
-                with st.expander(f"Customer ID: {customer}"):
-                    st.write("- **Key Strengths:** High satisfaction scores, positive feedback.")
-                    st.write("- **Recommendations:**")
-                    st.write("  - Encourage this customer to refer friends with a referral program.")
-                    st.write("  - Upsell premium products to this loyal customer.")
+            st.write("- **Key Strengths:** High satisfaction scores, positive feedback.")
+            st.write("- **Recommendations:**")
+            st.write("  - Encourage low-risk customers to refer friends with a referral program.")
+            st.write("  - Upsell premium products to loyal customers.")
         else:
             st.write("No low-risk customers found.")
 
@@ -227,28 +221,50 @@ if website_url:
     else:
         st.warning("Failed to analyze the website. Displaying mock data for demonstration purposes.")
         # Mock data for demo purposes
-        st.subheader("Website Analysis Content")
-        st.write("Based on the analysis of the website, here are the key findings:")
-        st.subheader("Core Strategic Elements")
-        st.write("- **Digital Twin Technology:** Enables real-time visibility across silos")
-        st.write("- **Decision Intelligence Studio:** AI-powered optimization")
-        st.write("- **Continuous Realignment:** Dynamic adaptation capabilities")
-        st.subheader("Proven Value Lever Implementation")
-        st.write("- **Intersilo Data Integration:**")
-        st.write("  - Implemented through Digital Twin platform")
-        st.write("  - Results: Thermo Fisher tracking 570K+ shipments")
-        st.write("  - Impact: Enhanced quality and compliance")
-        st.write("- **Resource Optimization:**")
-        st.write("  - Used Decision Intelligence for dynamic allocation")
-        st.write("  - Results: 33% reduction in expedited shipping costs")
-        st.write("  - Impact: $25M savings for GE Appliances")
-        st.write("- **Quality & Compliance:**")
-        st.write("  - Real-time monitoring and alerts")
-        st.write("  - Results: Enhanced cold chain compliance")
-        st.write("  - Impact: Significant reduction in temperature excursions")
-        st.subheader("Key Success Factors")
-        st.write("- Industry-specific solutions (Pharma, Consumer Goods, F&B)")
-        st.write("- End-to-end visibility approach")
-        st.write("- Focus on measurable outcomes")
+        st.subheader("Website Performance Metrics (Mock Data)")
+        st.write("- **Performance Score:** 85.00%")
+        st.write("- **First Contentful Paint:** 1.5s")
+        st.write("- **Time to Interactive:** 3.2s")
+        st.write("- **Speed Index:** 2.8s")
 else:
     st.warning("Please enter a valid website URL.")
+
+# Example Output for ParkourSC's Website Analysis
+st.header("Example Output: ParkourSC's Website Analysis")
+st.subheader("Core Strategic Elements")
+st.write("- **Digital Twin Technology:** Enables real-time visibility across silos")
+st.write("- **Decision Intelligence Studio:** AI-powered optimization")
+st.write("- **Continuous Realignment:** Dynamic adaptation capabilities")
+
+st.subheader("Proven Value Lever Implementation")
+st.write("- **Intersilo Data Integration:**")
+st.write("  - Implemented through Digital Twin platform")
+st.write("  - Results: Thermo Fisher tracking 570K+ shipments")
+st.write("  - Impact: Enhanced quality and compliance")
+st.write("- **Resource Optimization:**")
+st.write("  - Used Decision Intelligence for dynamic allocation")
+st.write("  - Results: 33% reduction in expedited shipping costs")
+st.write("  - Impact: $25M savings for GE Appliances")
+st.write("- **Quality & Compliance:**")
+st.write("  - Real-time monitoring and alerts")
+st.write("  - Results: Enhanced cold chain compliance")
+st.write("  - Impact: Significant reduction in temperature excursions")
+
+st.subheader("Key Success Factors")
+st.write("- Industry-specific solutions (Pharma, Consumer Goods, F&B)")
+st.write("- End-to-end visibility approach")
+st.write("- Focus on measurable outcomes")
+
+# Follow-up Questions and Strategy Suggestions
+st.header("Follow-up Questions and Strategy Suggestions")
+st.write("1. **How can ParkourSC further enhance its Digital Twin Technology to improve real-time visibility?**")
+st.write("2. **What additional industries can benefit from ParkourSC's Decision Intelligence Studio?**")
+st.write("3. **How can ParkourSC scale its Continuous Realignment capabilities to smaller enterprises?**")
+st.write("4. **What are the potential risks of relying heavily on AI-powered optimization, and how can they be mitigated?**")
+st.write("5. **How can ParkourSC measure the ROI of its solutions more effectively?**")
+
+st.subheader("Suggested Follow-up Strategy")
+st.write("- **Expand Industry Reach:** Target new industries like automotive and retail.")
+st.write("- **Enhance Customer Education:** Develop case studies and whitepapers to showcase success stories.")
+st.write("- **Invest in R&D:** Focus on improving AI algorithms for better decision-making.")
+st.write("- **Partnerships:** Collaborate with technology providers to enhance platform capabilities.")
