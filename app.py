@@ -193,41 +193,63 @@ def analyze_website_url(website_url):
         # Parse the website content using BeautifulSoup
         soup = BeautifulSoup(response.text, "html.parser")
 
+        # Initialize variables to store analysis results
+        products_services = []
+        success_stories = []
+        blog_resources = []
+        about_us = []
+        contact_us = []
+
         # Extract key sections
-        st.subheader("Strategies Based on Website Analysis")
+        st.subheader("Website Analysis Results")
 
         # 1. Products/Services
         products_services = soup.find_all(text=lambda text: "product" in text.lower() or "service" in text.lower())
         if products_services:
-            st.write("- **Products/Services:** Focus on promoting high-margin products and bundling services to increase average order value.")
+            st.write("- **Products/Services Found:**")
+            for item in products_services[:5]:  # Display up to 5 examples
+                st.write(f"  - {item.strip()}")
+            st.write("- **Strategy:** Focus on promoting high-margin products and bundling services to increase average order value.")
         else:
             st.write("- **Products/Services:** No specific product or service information found. Consider adding a dedicated 'Products' or 'Services' page.")
 
         # 2. Customer Success Stories
         success_stories = soup.find_all(text=lambda text: "success" in text.lower() or "testimonial" in text.lower())
         if success_stories:
-            st.write("- **Customer Success Stories:** Leverage positive customer testimonials in marketing campaigns to build trust and credibility.")
+            st.write("- **Customer Success Stories Found:**")
+            for item in success_stories[:5]:  # Display up to 5 examples
+                st.write(f"  - {item.strip()}")
+            st.write("- **Strategy:** Leverage positive customer testimonials in marketing campaigns to build trust and credibility.")
         else:
             st.write("- **Customer Success Stories:** No customer success stories found. Consider adding a 'Testimonials' or 'Case Studies' section.")
 
         # 3. Blog/Resources
         blog_resources = soup.find_all(text=lambda text: "blog" in text.lower() or "resources" in text.lower())
         if blog_resources:
-            st.write("- **Blog/Resources:** Create content that addresses common customer pain points to drive organic traffic and engagement.")
+            st.write("- **Blog/Resources Found:**")
+            for item in blog_resources[:5]:  # Display up to 5 examples
+                st.write(f"  - {item.strip()}")
+            st.write("- **Strategy:** Create content that addresses common customer pain points to drive organic traffic and engagement.")
         else:
             st.write("- **Blog/Resources:** No blog or resources section found. Consider adding a blog to share valuable insights and updates.")
 
         # 4. About Us
         about_us = soup.find_all(text=lambda text: "about" in text.lower() and "us" in text.lower())
         if about_us:
-            st.write("- **About Us:** Highlight company values and mission to connect with customers on a personal level.")
+            st.write("- **About Us Found:**")
+            for item in about_us[:5]:  # Display up to 5 examples
+                st.write(f"  - {item.strip()}")
+            st.write("- **Strategy:** Highlight company values and mission to connect with customers on a personal level.")
         else:
             st.write("- **About Us:** No 'About Us' section found. Consider adding a section to share your company's story and values.")
 
         # 5. Contact Us
         contact_us = soup.find_all(text=lambda text: "contact" in text.lower() and "us" in text.lower())
         if contact_us:
-            st.write("- **Contact Us:** Ensure easy access to customer support to improve customer satisfaction and retention.")
+            st.write("- **Contact Us Found:**")
+            for item in contact_us[:5]:  # Display up to 5 examples
+                st.write(f"  - {item.strip()}")
+            st.write("- **Strategy:** Ensure easy access to customer support to improve customer satisfaction and retention.")
         else:
             st.write("- **Contact Us:** No 'Contact Us' section found. Consider adding a contact form or support details.")
 
@@ -236,20 +258,13 @@ def analyze_website_url(website_url):
     except Exception as e:
         st.error(f"An error occurred during analysis: {e}")
 
-# Secondary Inputs
-st.header("Secondary Input Methods")
+# Input for website URL
+st.subheader("Enter Website URL for Analysis")
+website_url = st.text_input("Website URL", key="website_url_input")
 
-# LinkedIn URL
-st.subheader("Analyze Company LinkedIn Profile")
-linkedin_url = st.text_input("Enter Company LinkedIn URL", key="linkedin_url_input")
-if linkedin_url:
-    st.write(f"Fetching insights for LinkedIn URL: {linkedin_url}")
-    st.warning("LinkedIn API integration is not implemented in this demo.")
-
-# In the Company Website section
-st.subheader("Analyze Company Website URL")
-website_url = st.text_input("Enter Company Website URL", key="website_url_input")
-if website_url:
-    analyze_website_url(website_url)
-else:
-    st.warning("Please enter a valid website URL.")
+# Analyze button
+if st.button("Analyze Website"):
+    if website_url:
+        analyze_website_url(website_url)
+    else:
+        st.warning("Please enter a valid website URL.")
