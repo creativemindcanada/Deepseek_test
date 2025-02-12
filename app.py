@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+from transformers import pipeline
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -180,8 +181,8 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
 else:
     st.info("Please upload a CSV file or click the button to use randomly generated data.")
 
-# Function to analyze website URL and provide strategies
-def analyze_website_url(website_url):
+# Function to analyze website URL and extract content
+def scrape_website_content(website_url):
     try:
         # Fetch the website content
         headers = {
@@ -193,78 +194,84 @@ def analyze_website_url(website_url):
         # Parse the website content using BeautifulSoup
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # Initialize variables to store analysis results
-        products_services = []
-        success_stories = []
-        blog_resources = []
-        about_us = []
-        contact_us = []
-
         # Extract key sections
-        st.subheader("Website Analysis Results")
+        content = {
+            "products_services": soup.find_all(text=lambda text: "product" in text.lower() or "service" in text.lower()),
+            "success_stories": soup.find_all(text=lambda text: "success" in text.lower() or "testimonial" in text.lower()),
+            "blog_resources": soup.find_all(text=lambda text: "blog" in text.lower() or "resources" in text.lower()),
+            "about_us": soup.find_all(text=lambda text: "about" in text.lower() and "us" in text.lower()),
+            "contact_us": soup.find_all(text=lambda text: "contact" in text.lower() and "us" in text.lower()),
+        }
 
-        # 1. Products/Services
-        products_services = soup.find_all(text=lambda text: "product" in text.lower() or "service" in text.lower())
-        if products_services:
-            st.write("- **Products/Services Found:**")
-            for item in products_services[:5]:  # Display up to 5 examples
-                st.write(f"  - {item.strip()}")
-            st.write("- **Strategy:** Focus on promoting high-margin products and bundling services to increase average order value.")
-        else:
-            st.write("- **Products/Services:** No specific product or service information found. Consider adding a dedicated 'Products' or 'Services' page.")
+        # Convert extracted content to a readable format
+        extracted_content = ""
+        for section, items in content.items():
+            extracted_content += f"**{section.replace('_', ' ').title()}:**\n"
+            for item in items[:5]:  # Display up to 5 examples per section
+                extracted_content += f"- {item.strip()}\n"
+            extracted_content += "\n"
 
-        # 2. Customer Success Stories
-        success_stories = soup.find_all(text=lambda text: "success" in text.lower() or "testimonial" in text.lower())
-        if success_stories:
-            st.write("- **Customer Success Stories Found:**")
-            for item in success_stories[:5]:  # Display up to 5 examples
-                st.write(f"  - {item.strip()}")
-            st.write("- **Strategy:** Leverage positive customer testimonials in marketing campaigns to build trust and credibility.")
-        else:
-            st.write("- **Customer Success Stories:** No customer success stories found. Consider adding a 'Testimonials' or 'Case Studies' section.")
-
-        # 3. Blog/Resources
-        blog_resources = soup.find_all(text=lambda text: "blog" in text.lower() or "resources" in text.lower())
-        if blog_resources:
-            st.write("- **Blog/Resources Found:**")
-            for item in blog_resources[:5]:  # Display up to 5 examples
-                st.write(f"  - {item.strip()}")
-            st.write("- **Strategy:** Create content that addresses common customer pain points to drive organic traffic and engagement.")
-        else:
-            st.write("- **Blog/Resources:** No blog or resources section found. Consider adding a blog to share valuable insights and updates.")
-
-        # 4. About Us
-        about_us = soup.find_all(text=lambda text: "about" in text.lower() and "us" in text.lower())
-        if about_us:
-            st.write("- **About Us Found:**")
-            for item in about_us[:5]:  # Display up to 5 examples
-                st.write(f"  - {item.strip()}")
-            st.write("- **Strategy:** Highlight company values and mission to connect with customers on a personal level.")
-        else:
-            st.write("- **About Us:** No 'About Us' section found. Consider adding a section to share your company's story and values.")
-
-        # 5. Contact Us
-        contact_us = soup.find_all(text=lambda text: "contact" in text.lower() and "us" in text.lower())
-        if contact_us:
-            st.write("- **Contact Us Found:**")
-            for item in contact_us[:5]:  # Display up to 5 examples
-                st.write(f"  - {item.strip()}")
-            st.write("- **Strategy:** Ensure easy access to customer support to improve customer satisfaction and retention.")
-        else:
-            st.write("- **Contact Us:** No 'Contact Us' section found. Consider adding a contact form or support details.")
+        return extracted_content
 
     except requests.exceptions.RequestException as e:
         st.error(f"An error occurred while fetching the website: {e}")
+        return None
     except Exception as e:
-        st.error(f"An error occurred during analysis: {e}")
+        st.error(f"An error occurred during scraping: {e}")
+        return None
+
+# Function to generate AI-powered report using Hugging Face Transformers
+def generate_ai_report(extracted_content):
+    try:
+        # Load a pre-trained text generation model from Hugging Face
+        generator = pipeline("text-generation", model="EleutherAI/gpt-neo-1.3B")  # Use GPT-Neo or GPT-J
+
+        # Define the prompt for the AI model
+        prompt = f"""
+        Analyze the following website content and provide a detailed report with actionable strategies for improvement:
+
+        {extracted_content}
+
+        The report should include:
+        1. **Strengths:** Highlight the strengths of the website based on the content.
+        2. **Weaknesses:** Identify any missing or underdeveloped sections.
+        3. **Opportunities:** Suggest opportunities for growth or improvement.
+        4. **Strategies:** Provide actionable strategies to enhance the website's effectiveness.
+        """
+
+        # Generate the report using the AI model
+        report = generator(prompt, max_length=500, num_return_sequences=1)[0]["generated_text"]
+        return report
+
+    except Exception as e:
+        st.error(f"An error occurred while generating the AI report: {e}")
+        return None
 
 # Input for website URL
 st.subheader("Enter Website URL for Analysis")
 website_url = st.text_input("Website URL", key="website_url_input")
 
 # Analyze button
-if st.button("Analyze Website"):
+if st.button("Generate AI-Powered Report"):
     if website_url:
-        analyze_website_url(website_url)
+        with st.spinner("Analyzing website content..."):
+            # Step 1: Scrape website content
+            extracted_content = scrape_website_content(website_url)
+            if extracted_content:
+                st.success("Website content scraped successfully!")
+                st.write("### Extracted Content:")
+                st.write(extracted_content)
+
+                # Step 2: Generate AI-powered report
+                with st.spinner("Generating AI-powered report..."):
+                    report = generate_ai_report(extracted_content)
+                    if report:
+                        st.success("AI-powered report generated successfully!")
+                        st.write("### AI-Powered Analysis Report:")
+                        st.write(report)
+                    else:
+                        st.error("Failed to generate the AI report.")
+            else:
+                st.error("Failed to scrape website content.")
     else:
         st.warning("Please enter a valid website URL.")
