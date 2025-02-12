@@ -189,42 +189,24 @@ if linkedin_url:
     st.write(f"Fetching insights for LinkedIn URL: {linkedin_url}")
     st.warning("LinkedIn API integration is not implemented in this demo.")
 
-# Function to analyze website performance using Google PageSpeed Insights API
-def analyze_website(website_url, api_key):
-    url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website_url}&key={api_key}"
-    try:
-        response = requests.get(url, timeout=10)  # Add a timeout for the request
-        response.raise_for_status()  # Raise an HTTPError for bad responses
-        return response.json()
-    except requests.exceptions.Timeout:
-        st.error("The request to the PageSpeed API timed out. Please try again later.")
-        return None
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred while fetching website data: {e}")
-        return None
+# Function to analyze website URL and provide strategies
+def analyze_website_url(website_url):
+    # Placeholder function to simulate analysis
+    # In a real implementation, this would involve web scraping or API calls to analyze the website content
+    st.write(f"Analyzing website: {website_url}")
+    
+    # Simulated analysis based on common website sections
+    st.subheader("Strategies Based on Website Analysis")
+    st.write("- **Products/Services:** Focus on promoting high-margin products and bundling services to increase average order value.")
+    st.write("- **Customer Success Stories:** Leverage positive customer testimonials in marketing campaigns to build trust and credibility.")
+    st.write("- **Blog/Resources:** Create content that addresses common customer pain points to drive organic traffic and engagement.")
+    st.write("- **About Us:** Highlight company values and mission to connect with customers on a personal level.")
+    st.write("- **Contact Us:** Ensure easy access to customer support to improve customer satisfaction and retention.")
 
 # In the Company Website section
-st.subheader("Analyze Company Website")
+st.subheader("Analyze Company Website URL")
 website_url = st.text_input("Enter Company Website URL", key="website_url_input")
 if website_url:
-    api_key = "AIzaSyDyC_h2_dQiVJEOpXdPlob1lX0Sfb2UTlI"  # Replace with your actual API key
-    st.write(f"Fetching insights for website: {website_url}")
-    website_data = analyze_website(website_url, api_key)
-    
-    if website_data:
-        # Display performance metrics
-        st.subheader("Website Performance Metrics")
-        st.write(f"- **Performance Score:** {website_data['lighthouseResult']['categories']['performance']['score'] * 100:.2f}%")
-        st.write(f"- **First Contentful Paint:** {website_data['lighthouseResult']['audits']['first-contentful-paint']['displayValue']}")
-        st.write(f"- **Time to Interactive:** {website_data['lighthouseResult']['audits']['interactive']['displayValue']}")
-        st.write(f"- **Speed Index:** {website_data['lighthouseResult']['audits']['speed-index']['displayValue']}")
-    else:
-        st.warning("Failed to analyze the website. Displaying mock data for demonstration purposes.")
-        # Mock data for demo purposes
-        st.subheader("Website Performance Metrics (Mock Data)")
-        st.write("- **Performance Score:** 85.00%")
-        st.write("- **First Contentful Paint:** 1.5s")
-        st.write("- **Time to Interactive:** 3.2s")
-        st.write("- **Speed Index:** 2.8s")
+    analyze_website_url(website_url)
 else:
     st.warning("Please enter a valid website URL.")
