@@ -34,8 +34,22 @@ def generate_random_data():
     }
     return pd.DataFrame(data)
 
+# Function to ensure necessary columns with default values if missing
+def ensure_columns(data):
+    # Add default columns if they don't exist
+    if 'satisfaction_score' not in data.columns:
+        data['satisfaction_score'] = np.random.randint(1, 6, len(data))  # Random scores between 1 and 5
+    if 'purchase_amount' not in data.columns:
+        data['purchase_amount'] = np.random.uniform(10, 500, len(data)).round(2)  # Random purchase amounts
+    if 'total_spent' not in data.columns:
+        data['total_spent'] = np.random.uniform(100, 5000, len(data)).round(2)  # Random total spent
+    return data
+
 # Function to predict churn risk
 def predict_churn(data):
+    # Ensure required columns exist
+    data = ensure_columns(data)
+    
     # Check if required columns exist
     required_columns = ['satisfaction_score', 'purchase_amount', 'total_spent']
     if all(column in data.columns for column in required_columns):
@@ -47,17 +61,6 @@ def predict_churn(data):
     else:
         st.warning("Required columns for churn prediction are missing. Using default churn risk of 0.")
         data['churn_risk'] = 0  # Default churn risk if columns are missing
-    return data
-
-# In the dashboard section, call predict_churn only if data is available
-if 'data' in st.session_state and st.session_state['data'] is not None:
-    data = st.session_state['data']
-    data = predict_churn(data)  # Ensure churn_risk column exists
-
-# Function to ensure necessary columns with default values if missing
-def ensure_columns(data):
-    if 'total_spent' not in data.columns:
-        data['total_spent'] = 0
     return data
 
 # Upload customer data
