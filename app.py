@@ -195,61 +195,6 @@ Contact Information:
     except Exception as e:
         st.error(f"An error occurred while scraping the website: {str(e)}")
         return None
- 
-def create_structured_prompt(extracted_content: str) -> str:
-    """Create a more concise prompt that works better with distilgpt2."""
-    return f"""
-Competitor Website Content Analysis:
-{extracted_content}
-
-Please analyze this competitor's website and provide:
-
-CORE STRATEGIC ELEMENTS:
-Key technologies, tools, and strategies used by the competitor.
-
-PROVEN VALUE LEVERS:
-Specific implementations and their measurable impacts.
-
-KEY SUCCESS FACTORS:
-What makes this competitor successful in their industry.
-"""
-
-def parse_ai_response(ai_response: str) -> Dict[str, str]:
-    """Parse the AI response with more robust section detection."""
-    sections = {
-        "core_strategic_elements": "",
-        "proven_value_levers": "",
-        "key_success_factors": ""
-    }
-    
-    current_section = "core_strategic_elements"
-    try:
-        # Split the response into lines and clean up
-        lines = [line.strip() for line in ai_response.split('\n') if line.strip()]
-        
-        # Process each line
-        for line in lines:
-            # Check for section headers
-            lower_line = line.lower()
-            if "core strategic" in lower_line:
-                current_section = "core_strategic_elements"
-            elif "proven value" in lower_line:
-                current_section = "proven_value_levers"
-            elif "key success" in lower_line:
-                current_section = "key_success_factors"
-            else:
-                # Add content to current section
-                if sections[current_section]:
-                    sections[current_section] += "\n"
-                sections[current_section] += line
-    except Exception as e:
-        st.error(f"Error parsing AI response: {str(e)}")
-        # Provide default content for sections
-        for key in sections:
-            if not sections[key]:
-                sections[key] = "Analysis pending."
-    
-    return sections
 
 def display_structured_report(sections: Dict[str, str]):
     """Display the report with better error handling and formatting."""
