@@ -1,4 +1,8 @@
 import streamlit as st
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 import requests
 from bs4 import BeautifulSoup
 from transformers import pipeline
@@ -340,7 +344,7 @@ if analysis_type == "Customer Data Analysis":
         )
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
-def scrape_website_content(website_url: str) -> Optional[str]:
+def scrape_website_content_selenium(website_url: str) -> Optional[str]:
     """
     Scrape and extract content from a website with improved error handling and content processing.
     """
@@ -485,7 +489,7 @@ elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
     if st.button("Generate AI-Powered Report"):
         if website_url:
             with st.spinner("Analyzing website content..."):
-                extracted_content = scrape_website_content(website_url)
+                extracted_content = scrape_website_content_selenium(website_url)
                 if extracted_content:
                     with st.spinner("Generating structured AI report..."):
                         report = generate_ai_report(extracted_content)
