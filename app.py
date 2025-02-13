@@ -180,14 +180,6 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     )
 else:
     st.info("Please upload a CSV file or click the button to use randomly generated data.")
-import streamlit as st
-import requests
-from bs4 import BeautifulSoup
-from transformers import pipeline  # Ensure transformers and torch/tensorflow are installed
-
-# Title of the app
-st.title("AI-Powered Website Analysis Tool")
-
 # Preload the model when the app starts
 @st.cache_resource  # Cache the model to avoid reloading on every interaction
 def load_model():
@@ -293,3 +285,4 @@ if st.button("Generate AI-Powered Report"):
                 st.error("Failed to scrape website content.")
     else:
         st.warning("Please enter a valid website URL.")
+
