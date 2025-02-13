@@ -341,6 +341,7 @@ if analysis_type == "Customer Data Analysis":
         )
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
+        
         def scrape_website_content(website_url: str) -> Optional[str]:
     """
     Scrape and extract content from a website with improved error handling and content processing.
@@ -374,10 +375,7 @@ elif analysis_type == "Website Analysis":
         else:
             st.warning("Please enter a valid website URL.")
 
-def scrape_website_content(website_url: str) -> Optional[str]:
-    """
-    Scrape and extract content from a website with improved error handling and content processing.
-    """
+
     try:
         # Validate URL format
         if not website_url.startswith(('http://', 'https://')):
