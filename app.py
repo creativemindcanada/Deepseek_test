@@ -268,10 +268,6 @@ if st.button("Generate AI-Powered Report"):
             # Step 1: Scrape website content
             extracted_content = scrape_website_content(website_url)
             if extracted_content:
-                st.success("Website content scraped successfully!")
-                st.write("### Extracted Content:")
-                st.write(extracted_content)
-
                 # Step 2: Generate AI-powered report
                 with st.spinner("Generating AI-powered report..."):
                     report = generate_ai_report(extracted_content)
@@ -285,4 +281,3 @@ if st.button("Generate AI-Powered Report"):
                 st.error("Failed to scrape website content.")
     else:
         st.warning("Please enter a valid website URL.")
-
