@@ -474,7 +474,7 @@ Contact Information:
         st.error(f"An unexpected error occurred: {str(e)}")
         return None
         # Website Analysis
-else:  
+elif analysis_type == "Website Analysis":  
     st.subheader("Website Analysis")
     website_url = st.text_input("Enter Website URL for Analysis")
     
