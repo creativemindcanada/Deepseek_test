@@ -80,26 +80,11 @@ def predict_churn(data):
     return data
 
 def create_structured_prompt(extracted_content: str) -> str:
-    """Generate AI prompt to extract strategic insights automatically."""
+    """Create a more concise prompt that works better with distilgpt2."""
     return f"""
-Based on the extracted content from the website, generate a structured strategic analysis with the following key insights:
-
-1️⃣ **Core Strategic Elements**  
-- Identify the main technological or operational differentiators.  
-- Highlight any proprietary platforms or innovations.  
-
-2️⃣ **Proven Value Lever Implementation**  
-- Showcase data-driven improvements and business impact.  
-- Extract metrics on efficiency gains, cost savings, or industry benchmarks.  
-
-3️⃣ **Key Success Factors**  
-- Identify what contributes to the company's competitive advantage.  
-- Focus on industry positioning, customer-centric strategies, and measurable outcomes.  
-
-Website Content:
+Website Content Analysis:
 {extracted_content}
-"""
-"""
+
 Please analyze this website and provide:
 
 OVERVIEW:
@@ -204,38 +189,40 @@ def display_structured_report(sections: Dict[str, str]):
         st.markdown(content if content.strip() else "No recommendations available.")
 
 def generate_ai_report(extracted_content: str) -> Optional[str]:
-    """Generate AI report with structured strategic insights."""
+    """Generate AI report with better error handling and model parameters."""
     try:
         # Create prompt
         prompt = create_structured_prompt(extracted_content)
-
-        # Generate AI analysis
+        
+        # Generate text with more conservative parameters
         generated_text = generator(
             prompt,
-            max_new_tokens=700,  # Increase token limit for better insights
-            temperature=0.6,  # Lower temperature for factual responses
+            max_new_tokens=500,  # Reduced for more stability
+            num_return_sequences=1,
+            temperature=0.7,
             top_p=0.9,
             do_sample=True,
-            no_repeat_ngram_size=3,
-            num_beams=3,  # Use beam search for structured outputs
+            no_repeat_ngram_size=2,
+            num_beams=1,
             early_stopping=True
         )[0]["generated_text"]
-
+        
         # Remove the prompt from the generated text
         response_text = generated_text.replace(prompt, "").strip()
-
+        
         # Parse and structure the response
         sections = parse_ai_response(response_text)
-
+        
         # Display the structured report
         display_structured_report(sections)
-
+        
+        # Return the full text for download
         return generated_text
-
+        
     except Exception as e:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
+        st.info("Try refreshing the page and running the analysis again.")
         return None
-
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
@@ -357,53 +344,139 @@ if analysis_type == "Customer Data Analysis":
         )
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
-def scrape_website_content_selenium(website_url: str) -> str:
+def scrape_website_content_selenium(website_url: str) -> Optional[str]:
     """
-    Extracts structured content from a website, focusing on headings, bullet points, and key insights.
+    Scrape and extract content from a website with improved error handling and content processing.
     """
     try:
-        # Set up headless Chrome options
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
+        # Validate URL format
+        if not website_url.startswith(('http://', 'https://')):
+            website_url = 'https://' + website_url
 
-        # Initialize WebDriver
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        # Set up headers to mimic a browser request
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+        }
 
-        # Open the website
-        driver.get(website_url)
-        page_source = driver.page_source
-        driver.quit()  # Close the browser
+        # Make the request with timeout
+        response = requests.get(
+            website_url,
+            headers=headers,
+            timeout=15,
+            verify=True  # Enable SSL verification
+        )
+        response.raise_for_status()
 
-        # Parse content with BeautifulSoup
-        soup = BeautifulSoup(page_source, "html.parser")
+        # Check if response is HTML
+        content_type = response.headers.get('content-type', '').lower()
+        if 'text/html' not in content_type:
+            st.error(f"Invalid content type: {content_type}. Please provide a valid website URL.")
+            return None
 
-        # Extract key content sections
-        headings = [h.get_text(strip=True) for h in soup.find_all(["h1", "h2", "h3"])]
-        bullet_points = [li.get_text(strip=True) for li in soup.find_all("li")]
-        paragraphs = [p.get_text(strip=True) for p in soup.find_all("p")]
+        # Parse the content
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        # Format extracted content
-        structured_content = f"""
+        # Remove unwanted elements
+        for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
+            element.decompose()
+
+        # Initialize content dictionary
+        content = {
+            "title": "",
+            "meta_description": "",
+            "main_content": [],
+            "navigation": [],
+            "products_services": [],
+            "about": [],
+            "contact": []
+        }
+
+        # Extract title
+        if soup.title:
+            content["title"] = soup.title.string.strip() if soup.title.string else ""
+
+        # Extract meta description
+        meta_desc = soup.find('meta', attrs={'name': 'description'})
+        if meta_desc:
+            content["meta_description"] = meta_desc.get('content', '').strip()
+
+        # Extract main content
+        main_content = soup.find(['main', 'article', 'div'], class_=['content', 'main', 'main-content'])
+        if main_content:
+            content["main_content"] = [p.text.strip() for p in main_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']) if p.text.strip()]
+
+        # Extract navigation
+        nav = soup.find(['nav', 'menu'])
+        if nav:
+            content["navigation"] = [link.text.strip() for link in nav.find_all('a') if link.text.strip()]
+
+        # Extract products/services
+        products_section = soup.find(['div', 'section'], string=lambda text: text and any(word in text.lower() for word in ['product', 'service']))
+        if products_section:
+            content["products_services"] = [item.text.strip() for item in products_section.find_all(['p', 'li', 'h3']) if item.text.strip()]
+
+        # Extract about information
+        about_section = soup.find(['div', 'section'], string=lambda text: text and 'about' in text.lower())
+        if about_section:
+            content["about"] = [item.text.strip() for item in about_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Extract contact information
+        contact_section = soup.find(['div', 'section'], string=lambda text: text and 'contact' in text.lower())
+        if contact_section:
+            content["contact"] = [item.text.strip() for item in contact_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Format the extracted content
+        formatted_content = f"""
+Website: {website_url}
+
+Title: {content['title']}
+
+Description: {content['meta_description']}
+
+Navigation Menu:
+{chr(10).join([f"- {item}" for item in content['navigation'][:5]])}
+
+Main Content:
+{chr(10).join([f"- {item}" for item in content['main_content'][:10]])}
+
+Products/Services:
+{chr(10).join([f"- {item}" for item in content['products_services'][:5]])}
+
+About Information:
+{chr(10).join([f"- {item}" for item in content['about'][:5]])}
+
+Contact Information:
+{chr(10).join([f"- {item}" for item in content['contact'][:5]])}
+"""
         
-        HEADINGS:
-        {' | '.join(headings)}
+        # Check if we got meaningful content
+        if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
+            st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
+            
+        return formatted_content
 
-        BULLET POINTS:
-        {' | '.join(bullet_points)}
-
-        PARAGRAPHS:
-        {' '.join(paragraphs[:5])}  # Limit to first 5 paragraphs to avoid excess text
-        """
-
-        return structured_content if structured_content.strip() else "No content extracted."
-
+    except requests.exceptions.MissingSchema:
+        st.error("Invalid URL. Please include 'http://' or 'https://' in the URL.")
+        return None
+    except requests.exceptions.ConnectionError:
+        st.error("Could not connect to the website. Please check the URL and try again.")
+        return None
+    except requests.exceptions.Timeout:
+        st.error("The request timed out. Please try again later.")
+        return None
+    except requests.exceptions.TooManyRedirects:
+        st.error("Too many redirects. Please check the URL.")
+        return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred while fetching the website: {str(e)}")
+        return None
     except Exception as e:
-        st.error(f"Error during scraping: {str(e)}")
-        return "Scraping failed."
+        st.error(f"An unexpected error occurred: {str(e)}")
+        return None
         # Website Analysis
 if analysis_type == "Customer Data Analysis":  
     # Customer data logic here  
@@ -419,7 +492,7 @@ elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
                 extracted_content = scrape_website_content_selenium(website_url)
                 if extracted_content:
                     with st.spinner("Generating structured AI report..."):
-                        report = generate_ai_report()
+                        report = generate_ai_report(extracted_content)
                         if report:
                             st.success("Analysis complete! Expand the sections above to view detailed insights.")
                             st.download_button(
