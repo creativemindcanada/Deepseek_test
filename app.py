@@ -216,26 +216,27 @@ if analysis_type == "Customer Data Analysis":
     else:
         data = None
 
-    if 'data' in st.session_state and st.session_state['data'] is not None:
-        data = st.session_state['data']
-        
-       # Display raw data
-       st.subheader("Raw Data")
-       st.write(data)
+  if 'data' in st.session_state and st.session_state['data'] is not None:
+    data = st.session_state['data']
+    data = predict_churn(data)
+    
+    # Display raw data
+    st.subheader("Raw Data")
+    st.write(data)
 
-       # Basic Analysis
-       st.subheader("Basic Analysis")
-       col1, col2, col3 = st.columns(3)
-       with col1:
-           st.metric("Total Customers", f"{len(data):,}")
-       with col2:
-           st.metric("Average Satisfaction", f"{data['satisfaction_score'].mean():.2f}")
-       with col3:
-           st.metric("Total Revenue", f"${data['total_spent'].sum():,.2f}")
+    # Basic Analysis
+    st.subheader("Basic Analysis")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Customers", f"{len(data):,}")
+    with col2:
+        st.metric("Average Satisfaction", f"{data['satisfaction_score'].mean():.2f}")
+    with col3:
+        st.metric("Total Revenue", f"${data['total_spent'].sum():,.2f}")
 
-       # Visualizations
-       # Additional visualizations and analyses can go here...
+    # Visualizations
+    st.subheader("Customer Satisfaction Distribution")
+    fig = px.histogram(data, x="satisfaction_score", nbins=10)
+    st.plotly_chart(fig)
 
-else: 
-   # Handle website analysis or other types of analysis...
-   pass 
+    # ... (rest of the code)
