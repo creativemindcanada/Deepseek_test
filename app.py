@@ -219,6 +219,7 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
+
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
@@ -340,6 +341,35 @@ if analysis_type == "Customer Data Analysis":
         )
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
+
+elif analysis_type == "Website Analysis":
+    st.subheader("Website Analysis")
+    website_url = st.text_input("Enter Website URL for Analysis")
+    
+    if st.button("Generate AI-Powered Report"):
+        if website_url:
+            with st.spinner("Analyzing website content..."):
+                extracted_content = scrape_website_content(website_url)
+                if extracted_content:
+                    with st.spinner("Generating structured AI report..."):
+                        report = generate_ai_report(extracted_content)
+                        if report:
+                            st.success("Analysis complete! Expand the sections above to view detailed insights.")
+                            
+                            # Add download button for the report
+                            st.download_button(
+                                label="Download Full Report",
+                                data=report,
+                                file_name="website_analysis_report.txt",
+                                mime="text/plain"
+                            )
+                        else:
+                            st.error("Failed to generate the AI report.")
+                else:
+                    st.error("Failed to scrape website content.")
+        else:
+            st.warning("Please enter a valid website URL.")
+
 def scrape_website_content(website_url: str) -> Optional[str]:
     """
     Scrape and extract content from a website with improved error handling and content processing.
