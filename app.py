@@ -79,7 +79,7 @@ def predict_churn(data):
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
 
-def create_structured_prompt(extracted_content: str) -> str:
+def create_structured_prompt(: str) -> str:
     """Generate AI prompt to extract strategic insights automatically."""
     return f"""
 Based on the extracted content from the website, generate a structured strategic analysis with the following key insights:
@@ -421,7 +421,7 @@ elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
                 extracted_content = scrape_website_content_selenium(website_url)
                 if extracted_content:
                     with st.spinner("Generating structured AI report..."):
-                        report = generate_ai_report(extracted_content)
+                        report = generate_ai_report()
                         if report:
                             st.success("Analysis complete! Expand the sections above to view detailed insights.")
                             st.download_button(
