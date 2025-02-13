@@ -388,7 +388,7 @@ def scrape_website_content_selenium(website_url: str) -> str:
 
         # Format extracted content
         structured_content = f"""
-        """
+        
         HEADINGS:
         {' | '.join(headings)}
 
@@ -397,7 +397,7 @@ def scrape_website_content_selenium(website_url: str) -> str:
 
         PARAGRAPHS:
         {' '.join(paragraphs[:5])}  # Limit to first 5 paragraphs to avoid excess text
-        
+        """
 
         return structured_content if structured_content.strip() else "No content extracted."
 
