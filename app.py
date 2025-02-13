@@ -75,159 +75,150 @@ def predict_churn(data):
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
 
-# Function to create structured prompt for AI analysis
 def create_structured_prompt(extracted_content: str) -> str:
+    """Create a more concise prompt that works better with distilgpt2."""
     return f"""
-Analyze the following website content and provide a structured report:
-
+Website Content Analysis:
 {extracted_content}
 
-Please provide a detailed analysis in the following format:
+Please analyze this website and provide:
 
-1. Website Overview:
-   - Key features identified
-   - Main focus areas
-   - Target audience
+OVERVIEW:
+Key features and target audience
 
-2. Content Analysis:
-   - Products and Services assessment
-   - Quality of information
-   - Content organization
-   - Unique selling propositions
+CONTENT:
+Quality and organization assessment
 
-3. Engagement Elements:
-   - Call-to-actions
-   - User interaction features
-   - Social proof elements
-   - Contact accessibility
+ENGAGEMENT:
+User interaction and accessibility
 
-4. SWOT Analysis:
-   Strengths:
-   - List key strengths identified
-   
-   Weaknesses:
-   - List areas needing improvement
-   
-   Opportunities:
-   - List potential growth areas
-   
-   Threats:
-   - List competitive challenges
+STRENGTHS:
+Main positive aspects
 
-5. Recommendations:
-   - Short-term improvements (0-3 months)
-   - Medium-term strategy (3-6 months)
-   - Long-term goals (6-12 months)
+WEAKNESSES:
+Areas for improvement
 
-Please provide specific, actionable insights for each section.
+RECOMMENDATIONS:
+Suggested improvements
 """
 
-# Function to parse and structure AI response
 def parse_ai_response(ai_response: str) -> Dict[str, str]:
+    """Parse the AI response with more robust section detection."""
     sections = {
         "overview": "",
-        "content_analysis": "",
+        "content": "",
         "engagement": "",
-        "swot": "",
+        "strengths": "",
+        "weaknesses": "",
         "recommendations": ""
     }
     
     current_section = "overview"
-    lines = ai_response.split('\n')
-    
-    for line in lines:
-        if "Website Overview" in line:
-            current_section = "overview"
-        elif "Content Analysis" in line:
-            current_section = "content_analysis"
-        elif "Engagement Elements" in line:
-            current_section = "engagement"
-        elif "SWOT Analysis" in line:
-            current_section = "swot"
-        elif "Recommendations" in line:
-            current_section = "recommendations"
-        else:
-            sections[current_section] += line + "\n"
+    try:
+        # Split the response into lines and clean up
+        lines = [line.strip() for line in ai_response.split('\n') if line.strip()]
+        
+        # Process each line
+        for line in lines:
+            # Check for section headers
+            lower_line = line.lower()
+            if "overview" in lower_line:
+                current_section = "overview"
+            elif "content" in lower_line:
+                current_section = "content"
+            elif "engagement" in lower_line:
+                current_section = "engagement"
+            elif "strength" in lower_line:
+                current_section = "strengths"
+            elif "weakness" in lower_line:
+                current_section = "weaknesses"
+            elif "recommend" in lower_line:
+                current_section = "recommendations"
+            else:
+                # Add content to current section
+                if sections[current_section]:
+                    sections[current_section] += "\n"
+                sections[current_section] += line
+    except Exception as e:
+        st.error(f"Error parsing AI response: {str(e)}")
+        # Provide default content for sections
+        for key in sections:
+            if not sections[key]:
+                sections[key] = "Analysis pending."
     
     return sections
 
-# Function to display structured report
 def display_structured_report(sections: Dict[str, str]):
+    """Display the report with better error handling and formatting."""
     st.write("# Website Analysis Report")
     
-    with st.expander("📋 Website Overview", expanded=True):
-        st.markdown(sections["overview"])
+    # Overview
+    with st.expander("📋 Overview", expanded=True):
+        content = sections.get("overview", "Analysis pending.")
+        st.markdown(content if content.strip() else "No overview available.")
     
+    # Content Analysis
     with st.expander("📊 Content Analysis"):
-        st.markdown(sections["content_analysis"])
+        content = sections.get("content", "Analysis pending.")
+        st.markdown(content if content.strip() else "No content analysis available.")
     
-    with st.expander("🤝 Engagement Elements"):
-        st.markdown(sections["engagement"])
+    # Engagement
+    with st.expander("🤝 Engagement Assessment"):
+        content = sections.get("engagement", "Analysis pending.")
+        st.markdown(content if content.strip() else "No engagement analysis available.")
     
-    with st.expander("📈 SWOT Analysis"):
-        st.markdown(sections["swot"])
+    # Strengths & Weaknesses
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("💪 Strengths")
+        content = sections.get("strengths", "Analysis pending.")
+        st.markdown(content if content.strip() else "No strengths listed.")
     
-    with st.expander("💡 Recommendations"):
-        st.markdown(sections["recommendations"])
+    with col2:
+        st.subheader("🎯 Areas for Improvement")
+        content = sections.get("weaknesses", "Analysis pending.")
+        st.markdown(content if content.strip() else "No weaknesses listed.")
+    
+    # Recommendations
+    with st.expander("💡 Recommendations", expanded=True):
+        content = sections.get("recommendations", "Analysis pending.")
+        st.markdown(content if content.strip() else "No recommendations available.")
 
-# Function to analyze website URL and extract content
-def scrape_website_content(website_url):
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        response = requests.get(website_url, headers=headers, timeout=10)
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        content = {
-            "products_services": soup.find_all(text=lambda text: "product" in text.lower() or "service" in text.lower()),
-            "success_stories": soup.find_all(text=lambda text: "success" in text.lower() or "testimonial" in text.lower()),
-            "blog_resources": soup.find_all(text=lambda text: "blog" in text.lower() or "resources" in text.lower()),
-            "about_us": soup.find_all(text=lambda text: "about" in text.lower() and "us" in text.lower()),
-            "contact_us": soup.find_all(text=lambda text: "contact" in text.lower() and "us" in text.lower()),
-        }
-
-        extracted_content = ""
-        for section, items in content.items():
-            extracted_content += f"**{section.replace('_', ' ').title()}:**\n"
-            for item in items[:5]:
-                extracted_content += f"- {item.strip()}\n"
-            extracted_content += "\n"
-
-        return extracted_content
-
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred while fetching the website: {e}")
-        return None
-    except Exception as e:
-        st.error(f"An error occurred during scraping: {e}")
-        return None
-
-# Function to generate AI-powered report
 def generate_ai_report(extracted_content: str) -> Optional[str]:
+    """Generate AI report with better error handling and model parameters."""
     try:
+        # Create prompt
         prompt = create_structured_prompt(extracted_content)
         
+        # Generate text with more conservative parameters
         generated_text = generator(
             prompt,
-            max_new_tokens=800,
+            max_new_tokens=500,  # Reduced for more stability
             num_return_sequences=1,
             temperature=0.7,
             top_p=0.9,
-            repetition_penalty=1.2
+            do_sample=True,
+            no_repeat_ngram_size=2,
+            num_beams=1,
+            early_stopping=True
         )[0]["generated_text"]
         
-        sections = parse_ai_response(generated_text)
+        # Remove the prompt from the generated text
+        response_text = generated_text.replace(prompt, "").strip()
+        
+        # Parse and structure the response
+        sections = parse_ai_response(response_text)
+        
+        # Display the structured report
         display_structured_report(sections)
         
+        # Return the full text for download
         return generated_text
         
     except Exception as e:
-        st.error(f"An error occurred while generating the AI report: {e}")
+        st.error(f"An error occurred while generating the AI report: {str(e)}")
+        st.info("Try refreshing the page and running the analysis again.")
         return None
-
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
