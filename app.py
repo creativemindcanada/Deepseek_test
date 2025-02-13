@@ -78,6 +78,7 @@ def predict_churn(data):
         st.warning("Required columns for churn prediction are missing. Using default churn risk of 0.")
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
+    
     def scrape_website_content_selenium(website_url: str) -> Optional[str]:
     """
     Scrape and extract content from a website using Selenium with improved error handling and content processing.
