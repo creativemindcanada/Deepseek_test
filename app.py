@@ -180,6 +180,22 @@ if 'data' in st.session_state and st.session_state['data'] is not None:
     )
 else:
     st.info("Please upload a CSV file or click the button to use randomly generated data.")
+import streamlit as st
+import requests
+from bs4 import BeautifulSoup
+from transformers import pipeline  # Ensure transformers and torch/tensorflow are installed
+
+# Title of the app
+st.title("AI-Powered Website Analysis Tool")
+
+# Preload the model when the app starts
+@st.cache_resource  # Cache the model to avoid reloading on every interaction
+def load_model():
+    return pipeline("text-generation", model="distilgpt2")  # Use DistilGPT-2
+
+# Load the model
+with st.spinner("Loading AI model..."):
+    generator = load_model()
 
 # Function to analyze website URL and extract content
 def scrape_website_content(website_url):
@@ -223,9 +239,6 @@ def scrape_website_content(website_url):
 # Function to generate AI-powered report using Hugging Face Transformers
 def generate_ai_report(extracted_content):
     try:
-        # Load a pre-trained text generation model from Hugging Face
-        generator = pipeline("text-generation", model="EleutherAI/gpt-neo-1.3B")  # Use GPT-Neo or GPT-J
-
         # Define the prompt for the AI model
         prompt = f"""
         Analyze the following website content and provide a detailed report with actionable strategies for improvement:
@@ -240,12 +253,12 @@ def generate_ai_report(extracted_content):
         """
 
         # Truncate the prompt if it exceeds the model's maximum context length
-        max_context_length = 2048  # Adjust based on the model's context window
+        max_context_length = 512  # DistilGPT-2 has a smaller context window
         if len(prompt) > max_context_length:
             prompt = prompt[:max_context_length]
 
         # Generate the report using the AI model
-        report = generator(prompt, max_new_tokens=500, num_return_sequences=1)[0]["generated_text"]
+        report = generator(prompt, max_new_tokens=200, num_return_sequences=1)[0]["generated_text"]
         return report
 
     except Exception as e:
