@@ -473,7 +473,8 @@ Contact Information:
     except Exception as e:
         st.error(f"An unexpected error occurred: {str(e)}")
         return None
-else:  # Website Analysis
+        # Website Analysis
+else:  
     st.subheader("Website Analysis")
     website_url = st.text_input("Enter Website URL for Analysis")
     
