@@ -474,10 +474,14 @@ Contact Information:
         st.error(f"An unexpected error occurred: {str(e)}")
         return None
         # Website Analysis
-elif analysis_type == "Website Analysis":  
+if analysis_type == "Customer Data Analysis":  
+    # Customer data logic here  
+    st.sidebar.write("Analyzing customer data...")  
+
+elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
     st.subheader("Website Analysis")
     website_url = st.text_input("Enter Website URL for Analysis")
-    
+
     if st.button("Generate AI-Powered Report"):
         if website_url:
             with st.spinner("Analyzing website content..."):
@@ -487,8 +491,6 @@ elif analysis_type == "Website Analysis":
                         report = generate_ai_report(extracted_content)
                         if report:
                             st.success("Analysis complete! Expand the sections above to view detailed insights.")
-                            
-                            # Add download button for the report
                             st.download_button(
                                 label="Download Full Report",
                                 data=report,
