@@ -99,7 +99,7 @@ Based on the extracted content from the website, generate a structured strategic
 Website Content:
 {extracted_content}
 """
-
+"""
 Please analyze this website and provide:
 
 OVERVIEW:
