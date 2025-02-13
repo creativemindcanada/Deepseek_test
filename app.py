@@ -233,8 +233,7 @@ def generate_ai_report(extracted_content):
     try:
         # Define the prompt for the AI model
         prompt = f"""
-        Analyze the following website content and provide a detailed report with actionable strategies for improvement:
-
+Analysis
         {extracted_content}
 
         The report should include:
