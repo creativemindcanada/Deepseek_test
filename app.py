@@ -79,7 +79,7 @@ def predict_churn(data):
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
     
-    def scrape_website_content_selenium(website_url: str) -> Optional[str]:
+   def scrape_website_content_selenium(website_url: str) -> Optional[str]:
     """
     Scrape and extract content from a website using Selenium with improved error handling and content processing.
     """
@@ -195,7 +195,7 @@ Contact Information:
     except Exception as e:
         st.error(f"An error occurred while scraping the website: {str(e)}")
         return None
-
+        
 def create_structured_prompt(extracted_content: str) -> str:
     """Create a more concise prompt that works better with distilgpt2."""
     return f"""
