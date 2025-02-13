@@ -195,7 +195,7 @@ Contact Information:
     except Exception as e:
         st.error(f"An error occurred while scraping the website: {str(e)}")
         return None
-        
+ 
 def create_structured_prompt(extracted_content: str) -> str:
     """Create a more concise prompt that works better with distilgpt2."""
     return f"""
