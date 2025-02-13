@@ -9,12 +9,22 @@ from sklearn.linear_model import LogisticRegression
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional
 
 # Download NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
 
 # Title of the app
 st.title("Customer Insights Dashboard")
+
+# Preload the model when the app starts
+@st.cache_resource  # Cache the model to avoid reloading on every interaction
+def load_model():
+    return pipeline("text-generation", model="distilgpt2")  # Use DistilGPT-2
+
+# Load the model
+with st.spinner("Loading AI model..."):
+    generator = load_model()
 
 # Function to generate random customer data
 def generate_random_data():
@@ -65,144 +75,112 @@ def predict_churn(data):
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
 
-# Upload customer data
-uploaded_file = st.file_uploader("Upload your customer data (CSV file)", type=["csv"])
+# Function to create structured prompt for AI analysis
+def create_structured_prompt(extracted_content: str) -> str:
+    return f"""
+Analyze the following website content and provide a structured report:
 
-# Button to generate random data
-if st.button("Use Randomly Generated Customer Data"):
-    data = generate_random_data()
-    st.session_state['data'] = data
-elif uploaded_file is not None:
-    data = pd.read_csv(uploaded_file)
-    data = ensure_columns(data)
-    st.session_state['data'] = data
-else:
-    data = None
+{extracted_content}
 
-# Display current dashboard
-if 'data' in st.session_state and st.session_state['data'] is not None:
-    data = st.session_state['data']
+Please provide a detailed analysis in the following format:
 
-    # Predict churn risk
-    data = predict_churn(data)
+1. Website Overview:
+   - Key features identified
+   - Main focus areas
+   - Target audience
 
-    # Display raw data
-    st.subheader("Raw Data")
-    st.write(data)
+2. Content Analysis:
+   - Products and Services assessment
+   - Quality of information
+   - Content organization
+   - Unique selling propositions
 
-    # Basic Analysis
-    st.subheader("Basic Analysis")
-    st.write(f"Total Customers: {len(data)}")
-    st.write(f"Average Satisfaction Score: {data['satisfaction_score'].mean():.2f}")
-    st.write(f"Total Revenue: ${data['total_spent'].sum():,.2f}")
+3. Engagement Elements:
+   - Call-to-actions
+   - User interaction features
+   - Social proof elements
+   - Contact accessibility
 
-    # Visualizations
-    st.subheader("Customer Satisfaction Distribution")
-    fig = px.histogram(data, x="satisfaction_score", nbins=10)
-    st.plotly_chart(fig)
+4. SWOT Analysis:
+   Strengths:
+   - List key strengths identified
+   
+   Weaknesses:
+   - List areas needing improvement
+   
+   Opportunities:
+   - List potential growth areas
+   
+   Threats:
+   - List competitive challenges
 
-    # Insights and Recommendations (Dropdown Format)
-    st.subheader("Insights & Recommendations")
-    if data['satisfaction_score'].mean() >= 4:
-        st.success("Things are going well! Keep up the good work.")
-    else:
-        st.error("There are issues to address.")
+5. Recommendations:
+   - Short-term improvements (0-3 months)
+   - Medium-term strategy (3-6 months)
+   - Long-term goals (6-12 months)
 
-    # High Risk
-    with st.expander("🔴 High Risk Customers"):
-        high_risk = data[data['churn_risk'] > 0.7]
-        if not high_risk.empty:
-            st.write(f"- **Number of High-Risk Customers:** {len(high_risk)}")
-            st.write("- **Key Issues:** Poor packaging, delayed delivery.")
-            st.write("- **Recommendations:**")
-            st.write("  - Offer personalized discounts to retain high-risk customers.")
-            st.write("  - Improve delivery times in regions with high churn risk.")
-        else:
-            st.write("No high-risk customers found.")
+Please provide specific, actionable insights for each section.
+"""
+
+# Function to parse and structure AI response
+def parse_ai_response(ai_response: str) -> Dict[str, str]:
+    sections = {
+        "overview": "",
+        "content_analysis": "",
+        "engagement": "",
+        "swot": "",
+        "recommendations": ""
+    }
     
-    # Medium Risk
-    with st.expander("🟠 Medium Risk Customers"):
-        medium_risk = data[(data['churn_risk'] > 0.4) & (data['churn_risk'] <= 0.7)]
-        if not medium_risk.empty:
-            st.write(f"- **Number of Medium-Risk Customers:** {len(medium_risk)}")
-            st.write("- **Key Issues:** Mixed feedback on product quality.")
-            st.write("- **Recommendations:**")
-            st.write("  - Conduct customer surveys to identify specific pain points.")
-            st.write("  - Launch a customer loyalty program.")
-        else:
-            st.write("No medium-risk customers found.")
+    current_section = "overview"
+    lines = ai_response.split('\n')
     
-    # Low Risk
-    with st.expander("🟢 Low Risk Customers"):
-        low_risk = data[data['churn_risk'] <= 0.4]
-        if not low_risk.empty:
-            st.write(f"- **Number of Low-Risk Customers:** {len(low_risk)}")
-            st.write("- **Key Strengths:** High satisfaction scores, positive feedback.")
-            st.write("- **Recommendations:**")
-            st.write("  - Encourage low-risk customers to refer friends with a referral program.")
-            st.write("  - Upsell premium products to loyal customers.")
+    for line in lines:
+        if "Website Overview" in line:
+            current_section = "overview"
+        elif "Content Analysis" in line:
+            current_section = "content_analysis"
+        elif "Engagement Elements" in line:
+            current_section = "engagement"
+        elif "SWOT Analysis" in line:
+            current_section = "swot"
+        elif "Recommendations" in line:
+            current_section = "recommendations"
         else:
-            st.write("No low-risk customers found.")
+            sections[current_section] += line + "\n"
+    
+    return sections
 
-    # Sentiment Analysis
-    st.subheader("Sentiment Analysis")
-    def analyze_sentiment(text):
-        sia = SentimentIntensityAnalyzer()
-        return sia.polarity_scores(text)['compound']
-
-    data['sentiment'] = data['feedback'].apply(analyze_sentiment)
-    st.write(data[['customer_id', 'feedback', 'sentiment']])
-
-    # Add filters
-    st.subheader("Filter Data")
-    min_score = st.slider("Minimum Satisfaction Score", 1, 5, 3)
-    region_filter = st.selectbox("Select Region", ["All", "North", "South", "East", "West"])
-
-    # Apply filters
-    filtered_data = data[data['satisfaction_score'] >= min_score]
-    if region_filter != "All":
-        filtered_data = filtered_data[filtered_data['region'] == region_filter]
-
-    st.write(filtered_data)
-
-    # Add visualizations
-    st.subheader("Customer Satisfaction by Region")
-    fig = px.bar(filtered_data, x="region", y="satisfaction_score", color="region", barmode="group")
-    st.plotly_chart(fig)
-
-    # Add download button
-    st.subheader("Download Analyzed Data")
-    st.download_button(
-        label="Download CSV",
-        data=filtered_data.to_csv().encode('utf-8'),
-        file_name="analyzed_data.csv",
-        mime="text/csv"
-    )
-else:
-    st.info("Please upload a CSV file or click the button to use randomly generated data.")
-# Preload the model when the app starts
-@st.cache_resource  # Cache the model to avoid reloading on every interaction
-def load_model():
-    return pipeline("text-generation", model="distilgpt2")  # Use DistilGPT-2
-
-# Load the model
-with st.spinner("Loading AI model..."):
-    generator = load_model()
+# Function to display structured report
+def display_structured_report(sections: Dict[str, str]):
+    st.write("# Website Analysis Report")
+    
+    with st.expander("📋 Website Overview", expanded=True):
+        st.markdown(sections["overview"])
+    
+    with st.expander("📊 Content Analysis"):
+        st.markdown(sections["content_analysis"])
+    
+    with st.expander("🤝 Engagement Elements"):
+        st.markdown(sections["engagement"])
+    
+    with st.expander("📈 SWOT Analysis"):
+        st.markdown(sections["swot"])
+    
+    with st.expander("💡 Recommendations"):
+        st.markdown(sections["recommendations"])
 
 # Function to analyze website URL and extract content
 def scrape_website_content(website_url):
     try:
-        # Fetch the website content
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
         response = requests.get(website_url, headers=headers, timeout=10)
-        response.raise_for_status()  # Raise an error for bad responses (4xx, 5xx)
+        response.raise_for_status()
 
-        # Parse the website content using BeautifulSoup
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # Extract key sections
         content = {
             "products_services": soup.find_all(text=lambda text: "product" in text.lower() or "service" in text.lower()),
             "success_stories": soup.find_all(text=lambda text: "success" in text.lower() or "testimonial" in text.lower()),
@@ -211,11 +189,10 @@ def scrape_website_content(website_url):
             "contact_us": soup.find_all(text=lambda text: "contact" in text.lower() and "us" in text.lower()),
         }
 
-        # Convert extracted content to a readable format
         extracted_content = ""
         for section, items in content.items():
             extracted_content += f"**{section.replace('_', ' ').title()}:**\n"
-            for item in items[:5]:  # Display up to 5 examples per section
+            for item in items[:5]:
                 extracted_content += f"- {item.strip()}\n"
             extracted_content += "\n"
 
@@ -228,55 +205,175 @@ def scrape_website_content(website_url):
         st.error(f"An error occurred during scraping: {e}")
         return None
 
-# Function to generate AI-powered report using Hugging Face Transformers
-def generate_ai_report(extracted_content):
+# Function to generate AI-powered report
+def generate_ai_report(extracted_content: str) -> Optional[str]:
     try:
-        # Define the prompt for the AI model
-        prompt = f"""
-Analysis
-        {extracted_content}
-
-        The report should include:
-        1. **Strengths:** Highlight the strengths of the website based on the content.
-        2. **Weaknesses:** Identify any missing or underdeveloped sections.
-        3. **Opportunities:** Suggest opportunities for growth or improvement.
-        4. **Strategies:** Provide actionable strategies to enhance the website's effectiveness.
-        """
-
-        # Truncate the prompt if it exceeds the model's maximum context length
-        max_context_length = 512  # DistilGPT-2 has a smaller context window
-        if len(prompt) > max_context_length:
-            prompt = prompt[:max_context_length]
-
-        # Generate the report using the AI model
-        report = generator(prompt, max_new_tokens=200, num_return_sequences=1)[0]["generated_text"]
-        return report
-
+        prompt = create_structured_prompt(extracted_content)
+        
+        generated_text = generator(
+            prompt,
+            max_new_tokens=800,
+            num_return_sequences=1,
+            temperature=0.7,
+            top_p=0.9,
+            repetition_penalty=1.2
+        )[0]["generated_text"]
+        
+        sections = parse_ai_response(generated_text)
+        display_structured_report(sections)
+        
+        return generated_text
+        
     except Exception as e:
         st.error(f"An error occurred while generating the AI report: {e}")
         return None
 
-# Input for website URL
-st.subheader("Enter Website URL for Analysis")
-website_url = st.text_input("Website URL", key="website_url_input")
+# Main dashboard layout
+st.sidebar.title("Navigation")
+analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
 
-# Analyze button
-if st.button("Generate AI-Powered Report"):
-    if website_url:
-        with st.spinner("Analyzing website content..."):
-            # Step 1: Scrape website content
-            extracted_content = scrape_website_content(website_url)
-            if extracted_content:
-                # Step 2: Generate AI-powered report
-                with st.spinner("Generating AI-powered report..."):
-                    report = generate_ai_report(extracted_content)
-                    if report:
-                        st.success("AI-powered report generated successfully!")
-                        st.write("### AI-Powered Analysis Report:")
-                        st.write(report)
-                    else:
-                        st.error("Failed to generate the AI report.")
-            else:
-                st.error("Failed to scrape website content.")
+if analysis_type == "Customer Data Analysis":
+    # Upload customer data
+    uploaded_file = st.file_uploader("Upload your customer data (CSV file)", type=["csv"])
+
+    # Button to generate random data
+    if st.button("Use Randomly Generated Customer Data"):
+        data = generate_random_data()
+        st.session_state['data'] = data
+    elif uploaded_file is not None:
+        data = pd.read_csv(uploaded_file)
+        data = ensure_columns(data)
+        st.session_state['data'] = data
     else:
-        st.warning("Please enter a valid website URL.")
+        data = None
+
+    # Display current dashboard
+    if 'data' in st.session_state and st.session_state['data'] is not None:
+        data = st.session_state['data']
+        data = predict_churn(data)
+
+        # Display raw data
+        st.subheader("Raw Data")
+        st.write(data)
+
+        # Basic Analysis
+        st.subheader("Basic Analysis")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Customers", f"{len(data):,}")
+        with col2:
+            st.metric("Average Satisfaction", f"{data['satisfaction_score'].mean():.2f}")
+        with col3:
+            st.metric("Total Revenue", f"${data['total_spent'].sum():,.2f}")
+
+        # Visualizations
+        st.subheader("Customer Satisfaction Distribution")
+        fig = px.histogram(data, x="satisfaction_score", nbins=10)
+        st.plotly_chart(fig)
+
+        # Risk Analysis
+        st.subheader("Customer Risk Analysis")
+        
+        # High Risk
+        with st.expander("🔴 High Risk Customers"):
+            high_risk = data[data['churn_risk'] > 0.7]
+            if not high_risk.empty:
+                st.write(f"- **Number of High-Risk Customers:** {len(high_risk)}")
+                st.write("- **Key Issues:** Poor packaging, delayed delivery.")
+                st.write("- **Recommendations:**")
+                st.write("  - Offer personalized discounts to retain high-risk customers.")
+                st.write("  - Improve delivery times in regions with high churn risk.")
+            else:
+                st.write("No high-risk customers found.")
+        
+        # Medium Risk
+        with st.expander("🟠 Medium Risk Customers"):
+            medium_risk = data[(data['churn_risk'] > 0.4) & (data['churn_risk'] <= 0.7)]
+            if not medium_risk.empty:
+                st.write(f"- **Number of Medium-Risk Customers:** {len(medium_risk)}")
+                st.write("- **Key Issues:** Mixed feedback on product quality.")
+                st.write("- **Recommendations:**")
+                st.write("  - Conduct customer surveys to identify specific pain points.")
+                st.write("  - Launch a customer loyalty program.")
+            else:
+                st.write("No medium-risk customers found.")
+        
+        # Low Risk
+        with st.expander("🟢 Low Risk Customers"):
+            low_risk = data[data['churn_risk'] <= 0.4]
+            if not low_risk.empty:
+                st.write(f"- **Number of Low-Risk Customers:** {len(low_risk)}")
+                st.write("- **Key Strengths:** High satisfaction scores, positive feedback.")
+                st.write("- **Recommendations:**")
+                st.write("  - Encourage low-risk customers to refer friends with a referral program.")
+                st.write("  - Upsell premium products to loyal customers.")
+            else:
+                st.write("No low-risk customers found.")
+
+        # Sentiment Analysis
+        st.subheader("Sentiment Analysis")
+        def analyze_sentiment(text):
+            sia = SentimentIntensityAnalyzer()
+            return sia.polarity_scores(text)['compound']
+
+        data['sentiment'] = data['feedback'].apply(analyze_sentiment)
+        st.write(data[['customer_id', 'feedback', 'sentiment']])
+
+        # Add filters
+        st.subheader("Filter Data")
+        col1, col2 = st.columns(2)
+        with col1:
+            min_score = st.slider("Minimum Satisfaction Score", 1, 5, 3)
+        with col2:
+            region_filter = st.selectbox("Select Region", ["All", "North", "South", "East", "West"])
+
+        # Apply filters
+        filtered_data = data[data['satisfaction_score'] >= min_score]
+        if region_filter != "All":
+            filtered_data = filtered_data[filtered_data['region'] == region_filter]
+
+        st.write(filtered_data)
+
+        # Regional Analysis
+        st.subheader("Customer Satisfaction by Region")
+        fig = px.bar(filtered_data, x="region", y="satisfaction_score", color="region", barmode="group")
+        st.plotly_chart(fig)
+
+        # Download button
+        st.subheader("Download Analyzed Data")
+        st.download_button(
+            label="Download CSV",
+            data=filtered_data.to_csv().encode('utf-8'),
+            file_name="analyzed_data.csv",
+            mime="text/csv"
+        )
+    else:
+        st.info("Please upload a CSV file or click the button to use randomly generated data.")
+
+else:  # Website Analysis
+    st.subheader("Website Analysis")
+    website_url = st.text_input("Enter Website URL for Analysis")
+    
+    if st.button("Generate AI-Powered Report"):
+        if website_url:
+            with st.spinner("Analyzing website content..."):
+                extracted_content = scrape_website_content(website_url)
+                if extracted_content:
+                    with st.spinner("Generating structured AI report..."):
+                        report = generate_ai_report(extracted_content)
+                        if report:
+                            st.success("Analysis complete! Expand the sections above to view detailed insights.")
+                            
+                            # Add download button for the report
+                            st.download_button(
+                                label="Download Full Report",
+                                data=report,
+                                file_name="website_analysis_report.txt",
+                                mime="text/plain"
+                            )
+                        else:
+                            st.error("Failed to generate the AI report.")
+                else:
+                    st.error("Failed to scrape website content.")
+        else:
+            st.warning("Please enter a valid website URL.")
