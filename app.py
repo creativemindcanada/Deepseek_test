@@ -204,40 +204,38 @@ def display_structured_report(sections: Dict[str, str]):
         st.markdown(content if content.strip() else "No recommendations available.")
 
 def generate_ai_report(extracted_content: str) -> Optional[str]:
-    """Generate AI report with better error handling and model parameters."""
+    """Generate AI report with structured strategic insights."""
     try:
         # Create prompt
         prompt = create_structured_prompt(extracted_content)
-        
-        # Generate text with more conservative parameters
-       generated_text = generator(
-    prompt,
-    max_new_tokens=700,  # Increase token limit for better insights
-    temperature=0.6,  # Lower temperature for factual responses
-    top_p=0.9,
-    do_sample=True,
-    no_repeat_ngram_size=3,
-    num_beams=3,  # Use beam search for structured outputs
-    early_stopping=True
-)[0]["generated_text"]
 
-        
+        # Generate AI analysis
+        generated_text = generator(
+            prompt,
+            max_new_tokens=700,  # Increase token limit for better insights
+            temperature=0.6,  # Lower temperature for factual responses
+            top_p=0.9,
+            do_sample=True,
+            no_repeat_ngram_size=3,
+            num_beams=3,  # Use beam search for structured outputs
+            early_stopping=True
+        )[0]["generated_text"]
+
         # Remove the prompt from the generated text
         response_text = generated_text.replace(prompt, "").strip()
-        
+
         # Parse and structure the response
         sections = parse_ai_response(response_text)
-        
+
         # Display the structured report
         display_structured_report(sections)
-        
-        # Return the full text for download
+
         return generated_text
-        
+
     except Exception as e:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
-        st.info("Try refreshing the page and running the analysis again.")
         return None
+
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
