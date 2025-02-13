@@ -79,7 +79,7 @@ def predict_churn(data):
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
 
-def create_structured_prompt(: str) -> str:
+def create_structured_prompt(extracted_content: str) -> str:
     """Generate AI prompt to extract strategic insights automatically."""
     return f"""
 Based on the extracted content from the website, generate a structured strategic analysis with the following key insights:
