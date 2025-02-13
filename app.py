@@ -390,6 +390,7 @@ def scrape_website_content_selenium(website_url: str) -> str:
 
         # Format extracted content
         structured_content = f"""
+        """
         HEADINGS:
         {' | '.join(headings)}
 
