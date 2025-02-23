@@ -19,7 +19,7 @@ from typing import Dict, List, Optional
 nltk.download('vader_lexicon')
 
 # Title of the app
-st.title("Customer Insights & Competitor Analysis Dashboard")
+st.title("Customer Insights Dashboard")
 
 # Preload the model when the app starts
 @st.cache_resource  # Cache the model to avoid reloading on every interaction
@@ -78,142 +78,115 @@ def predict_churn(data):
         st.warning("Required columns for churn prediction are missing. Using default churn risk of 0.")
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
-    
-   def scrape_website_content_selenium(website_url: str) -> Optional[str]:
-    """
-    Scrape and extract content from a website using Selenium with improved error handling and content processing.
-    """
-    try:
-        # Validate URL format
-        if not website_url.startswith(('http://', 'https://')):
-            website_url = 'https://' + website_url
 
-        # Set up Selenium options
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")  # Run in headless mode
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
+def create_structured_prompt(extracted_content: str) -> str:
+    """Create a more concise prompt that works better with distilgpt2."""
+    return f"""
+Website Content Analysis:
+{extracted_content}
 
-        # Initialize the WebDriver
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        
-        # Navigate to the website
-        driver.get(website_url)
-        
-        # Wait for the page to load completely
-        driver.implicitly_wait(10)  # Wait up to 10 seconds for elements to load
+Please analyze this website and provide:
 
-        # Get the page source
-        page_source = driver.page_source
+OVERVIEW:
+Key features and target audience
 
-        # Close the browser
-        driver.quit()
+CONTENT:
+Quality and organization assessment
 
-        # Parse the content using BeautifulSoup
-        soup = BeautifulSoup(page_source, "html.parser")
+ENGAGEMENT:
+User interaction and accessibility
 
-        # Remove unwanted elements
-        for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
-            element.decompose()
+STRENGTHS:
+Main positive aspects
 
-        # Initialize content dictionary
-        content = {
-            "title": "",
-            "meta_description": "",
-            "main_content": [],
-            "navigation": [],
-            "products_services": [],
-            "about": [],
-            "contact": []
-        }
+WEAKNESSES:
+Areas for improvement
 
-        # Extract title
-        if soup.title:
-            content["title"] = soup.title.string.strip() if soup.title.string else ""
-
-        # Extract meta description
-        meta_desc = soup.find('meta', attrs={'name': 'description'})
-        if meta_desc:
-            content["meta_description"] = meta_desc.get('content', '').strip()
-
-        # Extract main content
-        main_content = soup.find(['main', 'article', 'div'], class_=['content', 'main', 'main-content'])
-        if main_content:
-            content["main_content"] = [p.text.strip() for p in main_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']) if p.text.strip()]
-
-        # Extract navigation
-        nav = soup.find(['nav', 'menu'])
-        if nav:
-            content["navigation"] = [link.text.strip() for link in nav.find_all('a') if link.text.strip()]
-
-        # Extract products/services
-        products_section = soup.find(['div', 'section'], string=lambda text: text and any(word in text.lower() for word in ['product', 'service']))
-        if products_section:
-            content["products_services"] = [item.text.strip() for item in products_section.find_all(['p', 'li', 'h3']) if item.text.strip()]
-
-        # Extract about information
-        about_section = soup.find(['div', 'section'], string=lambda text: text and 'about' in text.lower())
-        if about_section:
-            content["about"] = [item.text.strip() for item in about_section.find_all(['p', 'li']) if item.text.strip()]
-
-        # Extract contact information
-        contact_section = soup.find(['div', 'section'], string=lambda text: text and 'contact' in text.lower())
-        if contact_section:
-            content["contact"] = [item.text.strip() for item in contact_section.find_all(['p', 'li']) if item.text.strip()]
-
-        # Format the extracted content
-        formatted_content = f"""
-Website: {website_url}
-
-Title: {content['title']}
-
-Description: {content['meta_description']}
-
-Navigation Menu:
-{chr(10).join([f"- {item}" for item in content['navigation'][:5]])}
-
-Main Content:
-{chr(10).join([f"- {item}" for item in content['main_content'][:10]])}
-
-Products/Services:
-{chr(10).join([f"- {item}" for item in content['products_services'][:5]])}
-
-About Information:
-{chr(10).join([f"- {item}" for item in content['about'][:5]])}
-
-Contact Information:
-{chr(10).join([f"- {item}" for item in content['contact'][:5]])}
+RECOMMENDATIONS:
+Suggested improvements
 """
-        
-        # Check if we got meaningful content
-        if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
-            st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
-            
-        return formatted_content
 
+def parse_ai_response(ai_response: str) -> Dict[str, str]:
+    """Parse the AI response with more robust section detection."""
+    sections = {
+        "overview": "",
+        "content": "",
+        "engagement": "",
+        "strengths": "",
+        "weaknesses": "",
+        "recommendations": ""
+    }
+    
+    current_section = "overview"
+    try:
+        # Split the response into lines and clean up
+        lines = [line.strip() for line in ai_response.split('\n') if line.strip()]
+        
+        # Process each line
+        for line in lines:
+            # Check for section headers
+            lower_line = line.lower()
+            if "overview" in lower_line:
+                current_section = "overview"
+            elif "content" in lower_line:
+                current_section = "content"
+            elif "engagement" in lower_line:
+                current_section = "engagement"
+            elif "strength" in lower_line:
+                current_section = "strengths"
+            elif "weakness" in lower_line:
+                current_section = "weaknesses"
+            elif "recommend" in lower_line:
+                current_section = "recommendations"
+            else:
+                # Add content to current section
+                if sections[current_section]:
+                    sections[current_section] += "\n"
+                sections[current_section] += line
     except Exception as e:
-        st.error(f"An error occurred while scraping the website: {str(e)}")
-        return None
+        st.error(f"Error parsing AI response: {str(e)}")
+        # Provide default content for sections
+        for key in sections:
+            if not sections[key]:
+                sections[key] = "Analysis pending."
+    
+    return sections
 
 def display_structured_report(sections: Dict[str, str]):
     """Display the report with better error handling and formatting."""
-    st.write("# Competitor Analysis Report")
+    st.write("# Website Analysis Report")
     
-    # Core Strategic Elements
-    with st.expander("💡 Core Strategic Elements", expanded=True):
-        content = sections.get("core_strategic_elements", "Analysis pending.")
-        st.markdown(content if content.strip() else "No core strategic elements available.")
+    # Overview
+    with st.expander("📋 Overview", expanded=True):
+        content = sections.get("overview", "Analysis pending.")
+        st.markdown(content if content.strip() else "No overview available.")
     
-    # Proven Value Levers
-    with st.expander("📊 Proven Value Levers"):
-        content = sections.get("proven_value_levers", "Analysis pending.")
-        st.markdown(content if content.strip() else "No proven value levers available.")
+    # Content Analysis
+    with st.expander("📊 Content Analysis"):
+        content = sections.get("content", "Analysis pending.")
+        st.markdown(content if content.strip() else "No content analysis available.")
     
-    # Key Success Factors
-    with st.expander("🏆 Key Success Factors"):
-        content = sections.get("key_success_factors", "Analysis pending.")
-        st.markdown(content if content.strip() else "No key success factors available.")
+    # Engagement
+    with st.expander("🤝 Engagement Assessment"):
+        content = sections.get("engagement", "Analysis pending.")
+        st.markdown(content if content.strip() else "No engagement analysis available.")
+    
+    # Strengths & Weaknesses
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("💪 Strengths")
+        content = sections.get("strengths", "Analysis pending.")
+        st.markdown(content if content.strip() else "No strengths listed.")
+    
+    with col2:
+        st.subheader("🎯 Areas for Improvement")
+        content = sections.get("weaknesses", "Analysis pending.")
+        st.markdown(content if content.strip() else "No weaknesses listed.")
+    
+    # Recommendations
+    with st.expander("💡 Recommendations", expanded=True):
+        content = sections.get("recommendations", "Analysis pending.")
+        st.markdown(content if content.strip() else "No recommendations available.")
 
 def generate_ai_report(extracted_content: str) -> Optional[str]:
     """Generate AI report with better error handling and model parameters."""
@@ -250,10 +223,9 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
-
 # Main dashboard layout
 st.sidebar.title("Navigation")
-analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Competitor Website Analysis"])
+analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
 
 if analysis_type == "Customer Data Analysis":
     # Upload customer data
@@ -372,68 +344,166 @@ if analysis_type == "Customer Data Analysis":
         )
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
+def scrape_website_content_selenium(website_url: str) -> Optional[str]:
+    """
+    Scrape and extract content from a website with improved error handling and content processing.
+    """
+    try:
+        # Validate URL format
+        if not website_url.startswith(('http://', 'https://')):
+            website_url = 'https://' + website_url
 
-elif analysis_type == "Competitor Website Analysis":
-    st.subheader("Competitor Website Analysis")
-    website_url = st.text_input("Enter Competitor Website URL for Analysis")
+        # Set up headers to mimic a browser request
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+        }
 
-    if st.button("Generate AI-Powered Competitor Report"):
+        # Make the request with timeout
+        response = requests.get(
+            website_url,
+            headers=headers,
+            timeout=15,
+            verify=True  # Enable SSL verification
+        )
+        response.raise_for_status()
+
+        # Check if response is HTML
+        content_type = response.headers.get('content-type', '').lower()
+        if 'text/html' not in content_type:
+            st.error(f"Invalid content type: {content_type}. Please provide a valid website URL.")
+            return None
+
+        # Parse the content
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Remove unwanted elements
+        for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
+            element.decompose()
+
+        # Initialize content dictionary
+        content = {
+            "title": "",
+            "meta_description": "",
+            "main_content": [],
+            "navigation": [],
+            "products_services": [],
+            "about": [],
+            "contact": []
+        }
+
+        # Extract title
+        if soup.title:
+            content["title"] = soup.title.string.strip() if soup.title.string else ""
+
+        # Extract meta description
+        meta_desc = soup.find('meta', attrs={'name': 'description'})
+        if meta_desc:
+            content["meta_description"] = meta_desc.get('content', '').strip()
+
+        # Extract main content
+        main_content = soup.find(['main', 'article', 'div'], class_=['content', 'main', 'main-content'])
+        if main_content:
+            content["main_content"] = [p.text.strip() for p in main_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']) if p.text.strip()]
+
+        # Extract navigation
+        nav = soup.find(['nav', 'menu'])
+        if nav:
+            content["navigation"] = [link.text.strip() for link in nav.find_all('a') if link.text.strip()]
+
+        # Extract products/services
+        products_section = soup.find(['div', 'section'], string=lambda text: text and any(word in text.lower() for word in ['product', 'service']))
+        if products_section:
+            content["products_services"] = [item.text.strip() for item in products_section.find_all(['p', 'li', 'h3']) if item.text.strip()]
+
+        # Extract about information
+        about_section = soup.find(['div', 'section'], string=lambda text: text and 'about' in text.lower())
+        if about_section:
+            content["about"] = [item.text.strip() for item in about_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Extract contact information
+        contact_section = soup.find(['div', 'section'], string=lambda text: text and 'contact' in text.lower())
+        if contact_section:
+            content["contact"] = [item.text.strip() for item in contact_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Format the extracted content
+        formatted_content = f"""
+Website: {website_url}
+
+Title: {content['title']}
+
+Description: {content['meta_description']}
+
+Navigation Menu:
+{chr(10).join([f"- {item}" for item in content['navigation'][:5]])}
+
+Main Content:
+{chr(10).join([f"- {item}" for item in content['main_content'][:10]])}
+
+Products/Services:
+{chr(10).join([f"- {item}" for item in content['products_services'][:5]])}
+
+About Information:
+{chr(10).join([f"- {item}" for item in content['about'][:5]])}
+
+Contact Information:
+{chr(10).join([f"- {item}" for item in content['contact'][:5]])}
+"""
+        
+        # Check if we got meaningful content
+        if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
+            st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
+            
+        return formatted_content
+
+    except requests.exceptions.MissingSchema:
+        st.error("Invalid URL. Please include 'http://' or 'https://' in the URL.")
+        return None
+    except requests.exceptions.ConnectionError:
+        st.error("Could not connect to the website. Please check the URL and try again.")
+        return None
+    except requests.exceptions.Timeout:
+        st.error("The request timed out. Please try again later.")
+        return None
+    except requests.exceptions.TooManyRedirects:
+        st.error("Too many redirects. Please check the URL.")
+        return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred while fetching the website: {str(e)}")
+        return None
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {str(e)}")
+        return None
+        # Website Analysis
+if analysis_type == "Customer Data Analysis":  
+    # Customer data logic here  
+    st.sidebar.write("Analyzing customer data...")  
+
+elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
+    st.subheader("Website Analysis")
+    website_url = st.text_input("Enter Website URL for Analysis")
+
+    if st.button("Generate AI-Powered Report"):
         if website_url:
-            with st.spinner("Analyzing competitor website content..."):
+            with st.spinner("Analyzing website content..."):
                 extracted_content = scrape_website_content_selenium(website_url)
                 if extracted_content:
                     with st.spinner("Generating structured AI report..."):
                         report = generate_ai_report(extracted_content)
                         if report:
-                            st.success("Competitor analysis complete! Expand the sections below to view detailed insights.")
-                            
-                            # Display a sample report for logistics industry
-                            st.write("### Sample Competitor Analysis Report (Logistics Industry)")
-                            st.write("""
-**Core Strategic Elements:**
-
-- **Digital Twin Technology:** Enables real-time visibility across silos.
-- **Decision Intelligence Studio:** AI-powered optimization for logistics operations.
-- **Continuous Realignment:** Dynamic adaptation capabilities to changing market conditions.
-
-**Proven Value Lever Implementation:**
-
-
-
-
-
-1. **Intersilo Data Integration:**
-   - Implemented through Digital Twin platform.
-   - **Results:** Thermo Fisher tracking 570K+ shipments.
-   - **Impact:** Enhanced quality and compliance.
-
-2. **Resource Optimization:**
-   - Used Decision Intelligence for dynamic allocation.
-   - **Results:** 33% reduction in expedited shipping costs.
-   - **Impact:** $25M savings for GE Appliances.
-
-3. **Quality & Compliance:**
-   - Real-time monitoring and alerts.
-   - **Results:** Enhanced cold chain compliance.
-   - **Impact:** Significant reduction in temperature excursions.
-
-**Key Success Factors:**
-
-- Industry-specific solutions (Pharma, Consumer Goods, F&B).
-- End-to-end visibility approach.
-- Focus on measurable outcomes.
-                            """)
-                            
-                            # Download the full report
+                            st.success("Analysis complete! Expand the sections above to view detailed insights.")
                             st.download_button(
-                                label="Download Full Competitor Report",
+                                label="Download Full Report",
                                 data=report,
-                                file_name="competitor_analysis_report.txt",
+                                file_name="website_analysis_report.txt",
                                 mime="text/plain"
                             )
                         else:
                             st.error("Failed to generate the AI report.")
                 else:
-                    st.error("Failed to scrape competitor website content.")
+                    st.error("Failed to scrape website content.")
         else:
-            st.warning("Please enter a valid competitor website URL.")
+            st.warning("Please enter a valid website URL.")
