@@ -15,6 +15,54 @@ import nltk
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+
+# Download NLTK data for sentiment analysis
+nltk.download('vader_lexicon')
+
+# Title of the app
+st.title("Customer Insights Dashboard")
+
+# Preload the model when the app starts
+@st.cache_resource  # Cache the model to avoid reloading on every interaction
+def load_model():
+    return pipeline("text-generation", model="distilgpt2")  # Use DistilGPT-2
+
+# Load the model
+with st.spinner("Loading AI model..."):
+    generator = load_model()
+
+# Function to generate random customer data
+def generate_random_data():
+    np.random.seed(42)
+    num_customers = 100  # Generate 100 customers
+    data = {
+        "customer_id": range(1, num_customers + 1),
+        "satisfaction_score": np.random.randint(1, 6, num_customers),
+        "feedback": np.random.choice([
+            "Great product!", "Good quality.", "Delivery was late.", "Poor packaging.", "Excellent service!"
+        ], num_customers),
+        "purchase_amount": np.random.uniform(10, 500, num_customers).round(2),
+        "region": np.random.choice(["North", "South", "East", "West"], num_customers),
+        "age": np.random.randint(18, 65, num_customers),
+        "gender": np.random.choice(["Male", "Female", "Other"], num_customers),
+        "loyalty_status": np.random.choice(["New", "Regular", "VIP"], num_customers, p=[0.5, 0.3, 0.2]),
+        "last_purchase_date": [datetime.now() - timedelta(days=np.random.randint(1, 365)) for _ in range(num_customers)],
+        "total_spent": np.random.uniform(100, 5000, num_customers).round(2)
+    }
+    return pd.DataFrame(data)
+
+# Function to ensure necessary columns with default values if missing
+def ensure_columns(data):
+    # Add default columns if they don't exist
+    if 'satisfaction_score' not in data.columns:
+        data['satisfaction_score'] = np.random.randint(1, 6, len(data))  # Random scores between 1 and 5
+    if 'purchase_amount' not in data.columns:
+        data['purchase_amount'] = np.random.uniform(10, 500, len(data)).round(2)  # Random purchase amounts
+    if 'total_spent' not in data.columns:
+        data['total_spent'] = np.random.uniform(100, 5000, len(data)).round(2)  # Random total spent
+    return data
+
+# Function to scrape website content using Selenium
 def scrape_website_content_selenium(website_url: str) -> Optional[str]:
     """
     Scrape and extract content from a website using Selenium.
@@ -128,52 +176,7 @@ Contact Information:
     except Exception as e:
         st.error(f"An error occurred while scraping the website: {str(e)}")
         return None
-# Download NLTK data for sentiment analysis
-nltk.download('vader_lexicon')
-
-# Title of the app
-st.title("Customer Insights Dashboard")
-
-# Preload the model when the app starts
-@st.cache_resource  # Cache the model to avoid reloading on every interaction
-def load_model():
-    return pipeline("text-generation", model="distilgpt2")  # Use DistilGPT-2
-
-# Load the model
-with st.spinner("Loading AI model..."):
-    generator = load_model()
-
-# Function to generate random customer data
-def generate_random_data():
-    np.random.seed(42)
-    num_customers = 100  # Generate 100 customers
-    data = {
-        "customer_id": range(1, num_customers + 1),
-        "satisfaction_score": np.random.randint(1, 6, num_customers),
-        "feedback": np.random.choice([
-            "Great product!", "Good quality.", "Delivery was late.", "Poor packaging.", "Excellent service!"
-        ], num_customers),
-        "purchase_amount": np.random.uniform(10, 500, num_customers).round(2),
-        "region": np.random.choice(["North", "South", "East", "West"], num_customers),
-        "age": np.random.randint(18, 65, num_customers),
-        "gender": np.random.choice(["Male", "Female", "Other"], num_customers),
-        "loyalty_status": np.random.choice(["New", "Regular", "VIP"], num_customers, p=[0.5, 0.3, 0.2]),
-        "last_purchase_date": [datetime.now() - timedelta(days=np.random.randint(1, 365)) for _ in range(num_customers)],
-        "total_spent": np.random.uniform(100, 5000, num_customers).round(2)
-    }
-    return pd.DataFrame(data)
-
-# Function to ensure necessary columns with default values if missing
-def ensure_columns(data):
-    # Add default columns if they don't exist
-    if 'satisfaction_score' not in data.columns:
-        data['satisfaction_score'] = np.random.randint(1, 6, len(data))  # Random scores between 1 and 5
-    if 'purchase_amount' not in data.columns:
-        data['purchase_amount'] = np.random.uniform(10, 500, len(data)).round(2)  # Random purchase amounts
-    if 'total_spent' not in data.columns:
-        data['total_spent'] = np.random.uniform(100, 5000, len(data)).round(2)  # Random total spent
-    return data
-
+        
 # Function to predict churn risk
 def predict_churn(data):
     # Ensure required columns exist
