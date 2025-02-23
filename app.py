@@ -64,41 +64,39 @@ def ensure_columns(data):
 
 # Function to scrape website content using Selenium
 def scrape_website_content_selenium(website_url: str) -> Optional[str]:
-    """
-    Scrape and extract content from a website using Selenium.
-    """
+    """Scrape website content using Selenium with Linux fixes."""
     try:
-        # Validate URL format
-        if not website_url.startswith(('http://', 'https://')):
-            website_url = 'https://' + website_url
-
-        # --- Chrome Setup for Linux Systems ---
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--remote-debugging-port=9222")
-
-        # Fix 1: Explicitly specify Chrome binary location
-        chrome_options.binary_location = "/usr/bin/google-chrome"  # Common Linux path
-
-        # Fix 2: Configure WebDriver Manager to use correct versions
-        driver = webdriver.Chrome(
-            service=Service(
-                ChromeDriverManager(
-                    version="114.0.5735.90"  # Match your Chrome version
-                ).install()
-            ),
-            options=chrome_options
-        )
-
-        # Fix 3: Add virtual display (for headless environments)
+        # Fix 1: Add virtual display for headless environments
         from pyvirtualdisplay import Display
         display = Display(visible=0, size=(1920, 1080))
         display.start()
 
+        # Fix 2: Configure Chrome options
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.binary_location = "/usr/bin/google-chrome"  # Explicit binary path
+
+        # Fix 3: Install ChromeDriver with correct permissions
+        from webdriver_manager.chrome import ChromeDriverManager
+        driver_path = ChromeDriverManager().install()
+        
+        # Fix 4: Set executable permission for ChromeDriver
+        import os
+        os.chmod(driver_path, 0o755)  # Add execute permissions
+
+        # Initialize driver
+        driver = webdriver.Chrome(
+            service=Service(driver_path),
+            options=chrome_options
+        )
+
         # Rest of your scraping logic...
+        driver.get(website_url)
+        time.sleep(3)
+        # ... (keep the rest of your code)
         # Initialize the WebDriver
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         
