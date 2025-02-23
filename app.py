@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import time
 import os
+import subprocess
 
 # Download NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
@@ -76,8 +77,17 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
         chrome_options.add_argument("--disable-software-rasterizer")
         chrome_options.add_argument("--window-size=1920,1080")
 
+        # Install ChromeDriver with correct permissions
+        driver_path = ChromeDriverManager().install()
+        os.chmod(driver_path, 0o755)  # Add execute permissions
+
+        # Check if chromedriver is executable
+        if not os.access(driver_path, os.X_OK):
+            st.error(f"Chromedriver is not executable: {driver_path}")
+            return None
+
         # Initialize the WebDriver
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        driver = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
 
         # Navigate to the website
         driver.get(website_url)
