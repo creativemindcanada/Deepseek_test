@@ -72,13 +72,33 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
         if not website_url.startswith(('http://', 'https://')):
             website_url = 'https://' + website_url
 
-        # Set up Selenium options
+        # --- Chrome Setup for Linux Systems ---
         chrome_options = Options()
-        chrome_options.add_argument("--headless")  # Run in headless mode
+        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--remote-debugging-port=9222")
 
+        # Fix 1: Explicitly specify Chrome binary location
+        chrome_options.binary_location = "/usr/bin/google-chrome"  # Common Linux path
+
+        # Fix 2: Configure WebDriver Manager to use correct versions
+        driver = webdriver.Chrome(
+            service=Service(
+                ChromeDriverManager(
+                    version="114.0.5735.90"  # Match your Chrome version
+                ).install()
+            ),
+            options=chrome_options
+        )
+
+        # Fix 3: Add virtual display (for headless environments)
+        from pyvirtualdisplay import Display
+        display = Display(visible=0, size=(1920, 1080))
+        display.start()
+
+        # Rest of your scraping logic...
         # Initialize the WebDriver
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         
