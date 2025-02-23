@@ -2,7 +2,6 @@ import streamlit as st
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 import requests
 from bs4 import BeautifulSoup
@@ -159,34 +158,34 @@ def display_structured_report(sections: Dict[str, str]):
     
     # Overview
     with st.expander("📋 Overview", expanded=True):
-        content = sections.get("overview", "No overview available. The website content may be too limited for a detailed analysis.")
+        content = sections.get("overview", "Analysis pending.")
         st.markdown(content if content.strip() else "No overview available.")
     
     # Content Analysis
     with st.expander("📊 Content Analysis"):
-        content = sections.get("content", "No content analysis available. The website may not have enough text content for analysis.")
+        content = sections.get("content", "Analysis pending.")
         st.markdown(content if content.strip() else "No content analysis available.")
     
     # Engagement
     with st.expander("🤝 Engagement Assessment"):
-        content = sections.get("engagement", "No engagement analysis available. The website may lack interactive elements or user engagement features.")
+        content = sections.get("engagement", "Analysis pending.")
         st.markdown(content if content.strip() else "No engagement analysis available.")
     
     # Strengths & Weaknesses
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("💪 Strengths")
-        content = sections.get("strengths", "No specific strengths were identified. The website appears to have a clean design and clear navigation.")
+        content = sections.get("strengths", "Analysis pending.")
         st.markdown(content if content.strip() else "No strengths listed.")
     
     with col2:
         st.subheader("🎯 Areas for Improvement")
-        content = sections.get("weaknesses", "No specific weaknesses were identified. Consider adding more detailed content or interactive features to enhance user engagement.")
+        content = sections.get("weaknesses", "Analysis pending.")
         st.markdown(content if content.strip() else "No weaknesses listed.")
     
     # Recommendations
     with st.expander("💡 Recommendations", expanded=True):
-        content = sections.get("recommendations", "No specific recommendations available. Consider adding more content, improving SEO, or enhancing user engagement features.")
+        content = sections.get("recommendations", "Analysis pending.")
         st.markdown(content if content.strip() else "No recommendations available.")
 
 def generate_ai_report(extracted_content: str) -> Optional[str]:
@@ -224,7 +223,6 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
-
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
@@ -346,8 +344,145 @@ if analysis_type == "Customer Data Analysis":
         )
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
+def scrape_website_content_selenium(website_url: str) -> Optional[str]:
+    """
+    Scrape and extract content from a website with improved error handling and content processing.
+    """
+    try:
+        # Validate URL format
+        if not website_url.startswith(('http://', 'https://')):
+            website_url = 'https://' + website_url
 
-elif analysis_type == "Website Analysis":
+        # Set up headers to mimic a browser request
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+        }
+
+        # Make the request with timeout
+        response = requests.get(
+            website_url,
+            headers=headers,
+            timeout=15,
+            verify=True  # Enable SSL verification
+        )
+        response.raise_for_status()
+
+        # Check if response is HTML
+        content_type = response.headers.get('content-type', '').lower()
+        if 'text/html' not in content_type:
+            st.error(f"Invalid content type: {content_type}. Please provide a valid website URL.")
+            return None
+
+        # Parse the content
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Remove unwanted elements
+        for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
+            element.decompose()
+
+        # Initialize content dictionary
+        content = {
+            "title": "",
+            "meta_description": "",
+            "main_content": [],
+            "navigation": [],
+            "products_services": [],
+            "about": [],
+            "contact": []
+        }
+
+        # Extract title
+        if soup.title:
+            content["title"] = soup.title.string.strip() if soup.title.string else ""
+
+        # Extract meta description
+        meta_desc = soup.find('meta', attrs={'name': 'description'})
+        if meta_desc:
+            content["meta_description"] = meta_desc.get('content', '').strip()
+
+        # Extract main content
+        main_content = soup.find(['main', 'article', 'div'], class_=['content', 'main', 'main-content'])
+        if main_content:
+            content["main_content"] = [p.text.strip() for p in main_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']) if p.text.strip()]
+
+        # Extract navigation
+        nav = soup.find(['nav', 'menu'])
+        if nav:
+            content["navigation"] = [link.text.strip() for link in nav.find_all('a') if link.text.strip()]
+
+        # Extract products/services
+        products_section = soup.find(['div', 'section'], string=lambda text: text and any(word in text.lower() for word in ['product', 'service']))
+        if products_section:
+            content["products_services"] = [item.text.strip() for item in products_section.find_all(['p', 'li', 'h3']) if item.text.strip()]
+
+        # Extract about information
+        about_section = soup.find(['div', 'section'], string=lambda text: text and 'about' in text.lower())
+        if about_section:
+            content["about"] = [item.text.strip() for item in about_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Extract contact information
+        contact_section = soup.find(['div', 'section'], string=lambda text: text and 'contact' in text.lower())
+        if contact_section:
+            content["contact"] = [item.text.strip() for item in contact_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Format the extracted content
+        formatted_content = f"""
+Website: {website_url}
+
+Title: {content['title']}
+
+Description: {content['meta_description']}
+
+Navigation Menu:
+{chr(10).join([f"- {item}" for item in content['navigation'][:5]])}
+
+Main Content:
+{chr(10).join([f"- {item}" for item in content['main_content'][:10]])}
+
+Products/Services:
+{chr(10).join([f"- {item}" for item in content['products_services'][:5]])}
+
+About Information:
+{chr(10).join([f"- {item}" for item in content['about'][:5]])}
+
+Contact Information:
+{chr(10).join([f"- {item}" for item in content['contact'][:5]])}
+"""
+        
+        # Check if we got meaningful content
+        if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
+            st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
+            
+        return formatted_content
+
+    except requests.exceptions.MissingSchema:
+        st.error("Invalid URL. Please include 'http://' or 'https://' in the URL.")
+        return None
+    except requests.exceptions.ConnectionError:
+        st.error("Could not connect to the website. Please check the URL and try again.")
+        return None
+    except requests.exceptions.Timeout:
+        st.error("The request timed out. Please try again later.")
+        return None
+    except requests.exceptions.TooManyRedirects:
+        st.error("Too many redirects. Please check the URL.")
+        return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred while fetching the website: {str(e)}")
+        return None
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {str(e)}")
+        return None
+        # Website Analysis
+if analysis_type == "Customer Data Analysis":  
+    # Customer data logic here  
+    st.sidebar.write("Analyzing customer data...")  
+
+elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
     st.subheader("Website Analysis")
     website_url = st.text_input("Enter Website URL for Analysis")
 
