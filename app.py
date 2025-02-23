@@ -65,32 +65,19 @@ def ensure_columns(data):
 
 # Function to scrape website content using Selenium
 def scrape_website_content_selenium(website_url: str) -> Optional[str]:
-    """Scrape website content using Selenium with Linux fixes."""
+    """Scrape website content using Selenium with headless Chrome."""
     try:
-        # Fix 1: Add virtual display for headless environments
-        from pyvirtualdisplay import Display
-        display = Display(visible=0, size=(1920, 1080))
-        display.start()
-
-        # Fix 2: Configure Chrome options
+        # Configure Chrome options for headless browsing
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.binary_location = "/usr/bin/google-chrome"  # Explicit binary path
+        chrome_options.add_argument("--disable-software-rasterizer")
+        chrome_options.add_argument("--window-size=1920,1080")
 
-        # Fix 3: Install ChromeDriver with correct permissions
-        driver_path = ChromeDriverManager().install()
-
-        # Fix 4: Set executable permission for ChromeDriver
-        os.chmod(driver_path, 0o755)  # Add execute permissions
-
-        # Initialize driver
-        driver = webdriver.Chrome(
-            service=Service(driver_path),
-            options=chrome_options
-        )
+        # Initialize the WebDriver
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
         # Navigate to the website
         driver.get(website_url)
