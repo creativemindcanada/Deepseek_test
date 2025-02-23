@@ -14,7 +14,8 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-
+import time
+import os
 
 # Download NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
@@ -80,11 +81,9 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
         chrome_options.binary_location = "/usr/bin/google-chrome"  # Explicit binary path
 
         # Fix 3: Install ChromeDriver with correct permissions
-        from webdriver_manager.chrome import ChromeDriverManager
         driver_path = ChromeDriverManager().install()
-        
+
         # Fix 4: Set executable permission for ChromeDriver
-        import os
         os.chmod(driver_path, 0o755)  # Add execute permissions
 
         # Initialize driver
@@ -93,18 +92,10 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
             options=chrome_options
         )
 
-        # Rest of your scraping logic...
-        driver.get(website_url)
-        time.sleep(3)
-        # ... (keep the rest of your code)
-        # Initialize the WebDriver
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        
         # Navigate to the website
         driver.get(website_url)
-        
+
         # Wait for the page to load (you can adjust the sleep time if needed)
-        import time
         time.sleep(5)  # Wait for 5 seconds for the page to load
 
         # Extract the page source
@@ -184,22 +175,22 @@ About Information:
 Contact Information:
 {chr(10).join([f"- {item}" for item in content['contact'][:5]])}
 """
-        
+
         # Check if we got meaningful content
         if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
             st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
-            
+
         return formatted_content
 
     except Exception as e:
         st.error(f"An error occurred while scraping the website: {str(e)}")
         return None
-        
+
 # Function to predict churn risk
 def predict_churn(data):
     # Ensure required columns exist
     data = ensure_columns(data)
-    
+
     # Check if required columns exist
     required_columns = ['satisfaction_score', 'purchase_amount', 'total_spent']
     if all(column in data.columns for column in required_columns):
@@ -250,12 +241,12 @@ def parse_ai_response(ai_response: str) -> Dict[str, str]:
         "weaknesses": "",
         "recommendations": ""
     }
-    
+
     current_section = "overview"
     try:
         # Split the response into lines and clean up
         lines = [line.strip() for line in ai_response.split('\n') if line.strip()]
-        
+
         # Process each line
         for line in lines:
             # Check for section headers
@@ -283,40 +274,40 @@ def parse_ai_response(ai_response: str) -> Dict[str, str]:
         for key in sections:
             if not sections[key]:
                 sections[key] = "Analysis pending."
-    
+
     return sections
 
 def display_structured_report(sections: Dict[str, str]):
     """Display the report with better error handling and formatting."""
     st.write("# Website Analysis Report")
-    
+
     # Overview
     with st.expander("📋 Overview", expanded=True):
         content = sections.get("overview", "No overview available. The website content may be too limited for a detailed analysis.")
         st.markdown(content if content.strip() else "No overview available.")
-    
+
     # Content Analysis
     with st.expander("📊 Content Analysis"):
         content = sections.get("content", "No content analysis available. The website may not have enough text content for analysis.")
         st.markdown(content if content.strip() else "No content analysis available.")
-    
+
     # Engagement
     with st.expander("🤝 Engagement Assessment"):
         content = sections.get("engagement", "No engagement analysis available. The website may lack interactive elements or user engagement features.")
         st.markdown(content if content.strip() else "No engagement analysis available.")
-    
+
     # Strengths & Weaknesses
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("💪 Strengths")
         content = sections.get("strengths", "No specific strengths were identified. The website appears to have a clean design and clear navigation.")
         st.markdown(content if content.strip() else "No strengths listed.")
-    
+
     with col2:
         st.subheader("🎯 Areas for Improvement")
         content = sections.get("weaknesses", "No specific weaknesses were identified. Consider adding more detailed content or interactive features to enhance user engagement.")
         st.markdown(content if content.strip() else "No weaknesses listed.")
-    
+
     # Recommendations
     with st.expander("💡 Recommendations", expanded=True):
         content = sections.get("recommendations", "No specific recommendations available. Consider adding more content, improving SEO, or enhancing user engagement features.")
@@ -327,7 +318,7 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
     try:
         # Create prompt
         prompt = create_structured_prompt(extracted_content)
-        
+
         # Generate text with more conservative parameters
         generated_text = generator(
             prompt,
@@ -340,19 +331,19 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
             num_beams=1,
             early_stopping=True
         )[0]["generated_text"]
-        
+
         # Remove the prompt from the generated text
         response_text = generated_text.replace(prompt, "").strip()
-        
+
         # Parse and structure the response
         sections = parse_ai_response(response_text)
-        
+
         # Display the structured report
         display_structured_report(sections)
-        
+
         # Return the full text for download
         return generated_text
-        
+
     except Exception as e:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
@@ -403,7 +394,7 @@ if analysis_type == "Customer Data Analysis":
 
         # Risk Analysis
         st.subheader("Customer Risk Analysis")
-        
+
         # High Risk
         with st.expander("🔴 High Risk Customers"):
             high_risk = data[data['churn_risk'] > 0.7]
@@ -415,7 +406,7 @@ if analysis_type == "Customer Data Analysis":
                 st.write("  - Improve delivery times in regions with high churn risk.")
             else:
                 st.write("No high-risk customers found.")
-        
+
         # Medium Risk
         with st.expander("🟠 Medium Risk Customers"):
             medium_risk = data[(data['churn_risk'] > 0.4) & (data['churn_risk'] <= 0.7)]
@@ -427,7 +418,7 @@ if analysis_type == "Customer Data Analysis":
                 st.write("  - Launch a customer loyalty program.")
             else:
                 st.write("No medium-risk customers found.")
-        
+
         # Low Risk
         with st.expander("🟢 Low Risk Customers"):
             low_risk = data[data['churn_risk'] <= 0.4]
