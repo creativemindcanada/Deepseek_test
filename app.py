@@ -62,18 +62,35 @@ def ensure_columns(data):
     return data
 
 def scrape_website_content_selenium(website_url: str) -> Optional[str]:
-    """Scrape website content using Selenium with Linux fixes."""
+    """Scrape website content using Selenium with cloud fixes."""
     try:
-        from pyvirtualdisplay import Display
-        display = Display(visible=0, size=(1920, 1080))
-        display.start()
-
+        # Set up Chrome options
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.binary_location = "/usr/bin/google-chrome"
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-setuid-sandbox")
+        chrome_options.add_argument("--remote-debugging-port=9222")
 
+        # Fix path for cloud environments
+        chrome_options.binary_location = "/usr/bin/chromium-browser"
+
+        # Install driver with correct permissions
+        driver_path = ChromeDriverManager().install()
+        os.chmod(driver_path, 0o755)
+
+        # Initialize driver
+        driver = webdriver.Chrome(
+            service=Service(executable_path=driver_path, options=chrome_options),
+            options=chrome_options
+        )
+
+        # Scrape logic
+        driver.get(website_url)
+        time.sleep(5)
+        
+        # Rest of your scraping code...
         driver_path = ChromeDriverManager(version="114.0.5735.90").install()
         os.chmod(driver_path, 0o755)
 
