@@ -86,6 +86,9 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
             st.error(f"Chromedriver is not executable: {driver_path}")
             return None
 
+        # Log the chromedriver path
+        st.write(f"Chromedriver path: {driver_path}")
+
         # Initialize the WebDriver
         driver = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
 
