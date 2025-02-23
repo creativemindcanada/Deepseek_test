@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import time
 import os
-import subprocess
 
 # Download NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
@@ -25,9 +24,9 @@ nltk.download('vader_lexicon')
 st.title("Customer Insights Dashboard")
 
 # Preload the model when the app starts
-@st.cache_resource  # Cache the model to avoid reloading on every interaction
+@st.cache_resource
 def load_model():
-    return pipeline("text-generation", model="distilgpt2")  # Use DistilGPT-2
+    return pipeline("text-generation", model="distilgpt2")
 
 # Load the model
 with st.spinner("Loading AI model..."):
@@ -36,7 +35,7 @@ with st.spinner("Loading AI model..."):
 # Function to generate random customer data
 def generate_random_data():
     np.random.seed(42)
-    num_customers = 100  # Generate 100 customers
+    num_customers = 100
     data = {
         "customer_id": range(1, num_customers + 1),
         "satisfaction_score": np.random.randint(1, 6, num_customers),
@@ -53,65 +52,47 @@ def generate_random_data():
     }
     return pd.DataFrame(data)
 
-# Function to ensure necessary columns with default values if missing
 def ensure_columns(data):
-    # Add default columns if they don't exist
     if 'satisfaction_score' not in data.columns:
-        data['satisfaction_score'] = np.random.randint(1, 6, len(data))  # Random scores between 1 and 5
+        data['satisfaction_score'] = np.random.randint(1, 6, len(data))
     if 'purchase_amount' not in data.columns:
-        data['purchase_amount'] = np.random.uniform(10, 500, len(data)).round(2)  # Random purchase amounts
+        data['purchase_amount'] = np.random.uniform(10, 500, len(data)).round(2)
     if 'total_spent' not in data.columns:
-        data['total_spent'] = np.random.uniform(100, 5000, len(data)).round(2)  # Random total spent
+        data['total_spent'] = np.random.uniform(100, 5000, len(data)).round(2)
     return data
 
-# Function to scrape website content using Selenium
 def scrape_website_content_selenium(website_url: str) -> Optional[str]:
-    """Scrape website content using Selenium with headless Chrome."""
+    """Scrape website content using Selenium with Linux fixes."""
     try:
-        # Configure Chrome options for headless browsing
+        from pyvirtualdisplay import Display
+        display = Display(visible=0, size=(1920, 1080))
+        display.start()
+
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--disable-software-rasterizer")
-        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.binary_location = "/usr/bin/google-chrome"
 
-        # Install ChromeDriver with correct permissions
-        driver_path = ChromeDriverManager().install()
-        os.chmod(driver_path, 0o755)  # Add execute permissions
+        driver_path = ChromeDriverManager(version="114.0.5735.90").install()
+        os.chmod(driver_path, 0o755)
 
-        # Check if chromedriver is executable
-        if not os.access(driver_path, os.X_OK):
-            st.error(f"Chromedriver is not executable: {driver_path}")
-            return None
+        driver = webdriver.Chrome(
+            service=Service(driver_path),
+            options=chrome_options
+        )
 
-        # Log the chromedriver path
-        st.write(f"Chromedriver path: {driver_path}")
-
-        # Initialize the WebDriver
-        driver = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
-
-        # Navigate to the website
         driver.get(website_url)
-
-        # Wait for the page to load (you can adjust the sleep time if needed)
-        time.sleep(5)  # Wait for 5 seconds for the page to load
-
-        # Extract the page source
+        time.sleep(5)
+        
         page_source = driver.page_source
-
-        # Close the browser
         driver.quit()
+        display.stop()
 
-        # Parse the content using BeautifulSoup
         soup = BeautifulSoup(page_source, "html.parser")
-
-        # Remove unwanted elements
         for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
             element.decompose()
 
-        # Extract relevant content
         content = {
             "title": soup.title.string.strip() if soup.title else "",
             "meta_description": "",
@@ -122,37 +103,30 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
             "contact": []
         }
 
-        # Extract meta description
         meta_desc = soup.find('meta', attrs={'name': 'description'})
         if meta_desc:
             content["meta_description"] = meta_desc.get('content', '').strip()
 
-        # Extract main content
         main_content = soup.find(['main', 'article', 'div'], class_=['content', 'main', 'main-content'])
         if main_content:
             content["main_content"] = [p.text.strip() for p in main_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']) if p.text.strip()]
 
-        # Extract navigation
         nav = soup.find(['nav', 'menu'])
         if nav:
             content["navigation"] = [link.text.strip() for link in nav.find_all('a') if link.text.strip()]
 
-        # Extract products/services
         products_section = soup.find(['div', 'section'], string=lambda text: text and any(word in text.lower() for word in ['product', 'service']))
         if products_section:
             content["products_services"] = [item.text.strip() for item in products_section.find_all(['p', 'li', 'h3']) if item.text.strip()]
 
-        # Extract about information
         about_section = soup.find(['div', 'section'], string=lambda text: text and 'about' in text.lower())
         if about_section:
             content["about"] = [item.text.strip() for item in about_section.find_all(['p', 'li']) if item.text.strip()]
 
-        # Extract contact information
         contact_section = soup.find(['div', 'section'], string=lambda text: text and 'contact' in text.lower())
         if contact_section:
             content["contact"] = [item.text.strip() for item in contact_section.find_all(['p', 'li']) if item.text.strip()]
 
-        # Format the extracted content
         formatted_content = f"""
 Website: {website_url}
 
@@ -161,31 +135,31 @@ Title: {content['title']}
 Description: {content['meta_description']}
 
 Navigation Menu:
-{chr(10).join([f"- {item}" for item in content['navigation'][:5]])}
+{"\n".join([f"- {item}" for item in content['navigation'][:5]])}
 
 Main Content:
-{chr(10).join([f"- {item}" for item in content['main_content'][:10]])}
+{"\n".join([f"- {item}" for item in content['main_content'][:10]])}
 
 Products/Services:
-{chr(10).join([f"- {item}" for item in content['products_services'][:5]])}
+{"\n".join([f"- {item}" for item in content['products_services'][:5]])}
 
 About Information:
-{chr(10).join([f"- {item}" for item in content['about'][:5]])}
+{"\n".join([f"- {item}" for item in content['about'][:5]])}
 
 Contact Information:
-{chr(10).join([f"- {item}" for item in content['contact'][:5]])}
+{"\n".join([f"- {item}" for item in content['contact'][:5]])}
 """
-
-        # Check if we got meaningful content
         if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
-            st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
-
+            st.warning("Limited content could be extracted. Analysis may be incomplete.")
         return formatted_content
 
     except Exception as e:
-        st.error(f"An error occurred while scraping the website: {str(e)}")
+        st.error(f"Scraping error: {str(e)}")
         return None
 
+# Rest of the functions remain unchanged from your original code
+# [Include predict_churn, create_structured_prompt, parse_ai_response, 
+#  display_structured_report, generate_ai_report, and main dashboard layout here]
 # Function to predict churn risk
 def predict_churn(data):
     # Ensure required columns exist
