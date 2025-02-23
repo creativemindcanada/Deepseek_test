@@ -1,0 +1,21 @@
+name: Scrape website
+
+on: [push]
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          npm install puppeteer
+      - name: Run scraper
+        run: |
+          node scraper.js
+      - name: Upload results
+        uses: actions/upload-artifact@v2
+        with:
+          name: results
+          path: results.json
