@@ -10,3 +10,6 @@ transformers
 torch  # or tensorflow
 selenium
 webdriver-manager
+selenium==4.10.0
+webdriver-manager==3.8.6
+pyvirtualdisplay==3.0
