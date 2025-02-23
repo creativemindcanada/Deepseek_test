@@ -15,6 +15,119 @@ import nltk
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+def scrape_website_content_selenium(website_url: str) -> Optional[str]:
+    """
+    Scrape and extract content from a website using Selenium.
+    """
+    try:
+        # Validate URL format
+        if not website_url.startswith(('http://', 'https://')):
+            website_url = 'https://' + website_url
+
+        # Set up Selenium options
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")  # Run in headless mode
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+
+        # Initialize the WebDriver
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        
+        # Navigate to the website
+        driver.get(website_url)
+        
+        # Wait for the page to load (you can adjust the sleep time if needed)
+        import time
+        time.sleep(5)  # Wait for 5 seconds for the page to load
+
+        # Extract the page source
+        page_source = driver.page_source
+
+        # Close the browser
+        driver.quit()
+
+        # Parse the content using BeautifulSoup
+        soup = BeautifulSoup(page_source, "html.parser")
+
+        # Remove unwanted elements
+        for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
+            element.decompose()
+
+        # Extract relevant content
+        content = {
+            "title": soup.title.string.strip() if soup.title else "",
+            "meta_description": "",
+            "main_content": [],
+            "navigation": [],
+            "products_services": [],
+            "about": [],
+            "contact": []
+        }
+
+        # Extract meta description
+        meta_desc = soup.find('meta', attrs={'name': 'description'})
+        if meta_desc:
+            content["meta_description"] = meta_desc.get('content', '').strip()
+
+        # Extract main content
+        main_content = soup.find(['main', 'article', 'div'], class_=['content', 'main', 'main-content'])
+        if main_content:
+            content["main_content"] = [p.text.strip() for p in main_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']) if p.text.strip()]
+
+        # Extract navigation
+        nav = soup.find(['nav', 'menu'])
+        if nav:
+            content["navigation"] = [link.text.strip() for link in nav.find_all('a') if link.text.strip()]
+
+        # Extract products/services
+        products_section = soup.find(['div', 'section'], string=lambda text: text and any(word in text.lower() for word in ['product', 'service']))
+        if products_section:
+            content["products_services"] = [item.text.strip() for item in products_section.find_all(['p', 'li', 'h3']) if item.text.strip()]
+
+        # Extract about information
+        about_section = soup.find(['div', 'section'], string=lambda text: text and 'about' in text.lower())
+        if about_section:
+            content["about"] = [item.text.strip() for item in about_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Extract contact information
+        contact_section = soup.find(['div', 'section'], string=lambda text: text and 'contact' in text.lower())
+        if contact_section:
+            content["contact"] = [item.text.strip() for item in contact_section.find_all(['p', 'li']) if item.text.strip()]
+
+        # Format the extracted content
+        formatted_content = f"""
+Website: {website_url}
+
+Title: {content['title']}
+
+Description: {content['meta_description']}
+
+Navigation Menu:
+{chr(10).join([f"- {item}" for item in content['navigation'][:5]])}
+
+Main Content:
+{chr(10).join([f"- {item}" for item in content['main_content'][:10]])}
+
+Products/Services:
+{chr(10).join([f"- {item}" for item in content['products_services'][:5]])}
+
+About Information:
+{chr(10).join([f"- {item}" for item in content['about'][:5]])}
+
+Contact Information:
+{chr(10).join([f"- {item}" for item in content['contact'][:5]])}
+"""
+        
+        # Check if we got meaningful content
+        if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
+            st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
+            
+        return formatted_content
+
+    except Exception as e:
+        st.error(f"An error occurred while scraping the website: {str(e)}")
+        return None
 # Download NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
 
