@@ -598,6 +598,59 @@ Contact Information:
     except Exception as e:
         st.error(f"An unexpected error occurred: {str(e)}")
         return None
+
+
+# Function to optimize AI report generation with caching
+@st.cache_data(ttl=3600)  # Cache results for 1 hour
+def generate_ai_report_optimized(extracted_content: str) -> Optional[str]:
+    """
+    Optimized AI report generation with caching to improve performance.
+    """
+    try:
+        # Create prompt
+        prompt = create_structured_prompt(extracted_content)
+        
+        # Generate text with more conservative parameters
+        generated_text = generator(
+            prompt,
+            max_new_tokens=500,  # Reduced for more stability
+            num_return_sequences=1,
+            temperature=0.7,
+            top_p=0.9,
+            do_sample=True,
+            no_repeat_ngram_size=2,
+            num_beams=1,
+            early_stopping=True
+        )[0]["generated_text"]
+        
+        # Remove the prompt from the generated text
+        response_text = generated_text.replace(prompt, "").strip()
+        
+        # Parse and structure the response
+        sections = parse_ai_response(response_text)
+        
+        # Display the structured report
+        display_structured_report(sections)
+        
+        # Return the full text for download
+        return generated_text
+        
+    except Exception as e:
+        st.error(f"An error occurred while generating the AI report: {str(e)}")
+        st.info("Try refreshing the page and running the analysis again.")
+        return None
+
+# Function to add a loading spinner with progress bar
+def show_loading_spinner(message: str):
+    """
+    Display a loading spinner with a progress bar for long-running tasks.
+    """
+    with st.spinner(message):
+        progress_bar = st.progress(0)
+        for i in range(100):
+            time.sleep(0.02)  # Simulate a long-running task
+            progress_bar.progress(i + 1)
+        st.success("Done!")
         # Website Analysis
 if analysis_type == "Customer Data Analysis":  
     # Customer data logic here  
