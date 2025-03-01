@@ -237,6 +237,11 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
+
+# Function to clear session state
+def clear_data():
+    st.session_state.pop('data', None)
+    st.toast("Data cleared successfully!", icon="✅")
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
