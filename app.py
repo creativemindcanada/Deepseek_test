@@ -850,26 +850,17 @@ if analysis_type == "Website Analysis":
                             st.json(performance_metrics)
                         else:
                             st.warning("No performance data found.")
- # Competitor Analysis
-    st.sidebar.subheader("Competitor Analysis")
-    competitor_urls = st.sidebar.text_area("Enter Competitor URLs (one per line)", "").splitlines()
-    if st.button("Generate AI-Powered Report"):
-        if website_url:
-            with st.spinner("Analyzing website content..."):
-                extracted_content = scrape_website_content_selenium(website_url)
-                if extracted_content:
-                    with st.spinner("Generating structured AI report..."):
-                        report = generate_ai_report(extracted_content)
-                        if report:
-                            st.success("Analysis complete! Expand the sections above to view detailed insights.")
-                            st.download_button(
-                                label="Download Full Report",
-                                data=report,
-                                file_name="website_analysis_report.txt",
-                                mime="text/plain"
-                            )
-                        else:
-                            st.error("Failed to generate the AI report.")
+# Competitor Analysis
+                        if competitor_urls:
+                            st.subheader("Competitor Analysis")
+                            comparison_results = compare_websites(competitor_urls)
+                            if comparison_results:
+                                st.write("### Competitor Comparison")
+                                st.json(comparison_results)
+                            else:
+                                st.warning("No competitor data found.")
+                    else:
+                        st.error("Failed to generate the AI report.")
                 else:
                     st.error("Failed to scrape website content.")
         else:
