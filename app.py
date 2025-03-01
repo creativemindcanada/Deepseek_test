@@ -92,7 +92,10 @@ def predict_churn(data):
         st.warning("Required columns for churn prediction are missing. Using default churn risk of 0.")
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
-
+# Function to clear session state
+def clear_data():
+    st.session_state.pop('data', None)
+    st.toast("Data cleared successfully!", icon="✅")
 def create_structured_prompt(extracted_content: str) -> str:
     """Create a more concise prompt that works better with distilgpt2."""
     return f"""
@@ -238,10 +241,7 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.info("Try refreshing the page and running the analysis again.")
         return None
 
-# Function to clear session state
-def clear_data():
-    st.session_state.pop('data', None)
-    st.toast("Data cleared successfully!", icon="✅")
+
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
