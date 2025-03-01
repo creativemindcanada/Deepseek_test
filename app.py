@@ -96,9 +96,7 @@ def predict_churn(data):
 def clear_data():
     st.session_state.pop('data', None)
     st.toast("Data cleared successfully!", icon="✅")
-    # Main dashboard layout
-st.sidebar.title("Navigation")
-analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
+
 
 # Help section in the sidebar
 with st.sidebar.expander("ℹ️ Help"):
