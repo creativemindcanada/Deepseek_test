@@ -10,3 +10,4 @@ transformers
 torch  # or tensorflow
 selenium
 webdriver-manager
+pipeline
