@@ -238,9 +238,24 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
+        
+# Function to clear session state
+def clear_data():
+    st.session_state.pop('data', None)
+    st.toast("Data cleared successfully!", icon="✅")
+
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
+
+# Help section in the sidebar
+with st.sidebar.expander("ℹ️ Help"):
+    st.write("""
+    - **Customer Data Analysis**: Upload a CSV file or use randomly generated data to analyze customer insights.
+    - **Website Analysis**: Enter a website URL to generate an AI-powered analysis report.
+    - **Dark Mode**: Toggle dark mode for better visibility in low-light environments.
+    - **Clear Data**: Reset the app to its initial state.
+    """)
 
 if analysis_type == "Customer Data Analysis":
     # Upload customer data
