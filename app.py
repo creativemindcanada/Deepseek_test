@@ -20,6 +20,20 @@ nltk.download('vader_lexicon')
 
 # Title of the app
 st.title("Customer Insights Dashboard")
+# Dark mode toggle
+dark_mode = st.sidebar.checkbox("🌙 Dark Mode")
+if dark_mode:
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-color: #1E1E1E;
+            color: #FFFFFF;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # Preload the model when the app starts
 @st.cache_resource  # Cache the model to avoid reloading on every interaction
