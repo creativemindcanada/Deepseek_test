@@ -659,6 +659,197 @@ if analysis_type == "Customer Data Analysis":
 elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
     st.subheader("Website Analysis")
     website_url = st.text_input("Enter Website URL for Analysis")
+    # Function to compare multiple websites (Competitor Analysis)
+def compare_websites(urls: List[str]) -> Dict[str, Dict[str, str]]:
+    """
+    Compare multiple websites by extracting and analyzing their content.
+    """
+    comparison_results = {}
+    for url in urls:
+        extracted_content = scrape_website_content_selenium(url)
+        if extracted_content:
+            comparison_results[url] = parse_ai_response(generate_ai_report(extracted_content))
+        else:
+            st.warning(f"Failed to extract content from {url}. Skipping...")
+    return comparison_results
+
+# Function to perform SEO analysis
+def perform_seo_analysis(url: str) -> Dict[str, str]:
+    """
+    Perform SEO analysis on a website, including meta tags, headers, and keyword density.
+    """
+    try:
+        # Extract content using the existing scraping function
+        extracted_content = scrape_website_content_selenium(url)
+        if not extracted_content:
+            return {}
+
+        # Parse the content for SEO metrics
+        soup = BeautifulSoup(extracted_content, "html.parser")
+        
+        # Extract meta tags
+        meta_tags = {}
+        for meta in soup.find_all('meta'):
+            if meta.get('name'):
+                meta_tags[meta.get('name')] = meta.get('content', '')
+        
+        # Extract headers (h1, h2, h3)
+        headers = {
+            "h1": [h1.text.strip() for h1 in soup.find_all('h1')],
+            "h2": [h2.text.strip() for h2 in soup.find_all('h2')],
+            "h3": [h3.text.strip() for h3 in soup.find_all('h3')],
+        }
+
+        # Calculate keyword density
+        from collections import Counter
+        import re
+        words = re.findall(r'\b\w+\b', extracted_content.lower())
+        word_count = len(words)
+        keyword_density = Counter(words) if word_count > 0 else {}
+
+        return {
+            "meta_tags": meta_tags,
+            "headers": headers,
+            "keyword_density": keyword_density
+        }
+    except Exception as e:
+        st.error(f"Error performing SEO analysis: {str(e)}")
+        return {}
+
+# Function to analyze sentiment of website content
+def analyze_website_sentiment(content: str) -> Dict[str, float]:
+    """
+    Analyze the sentiment of website content using NLTK.
+    """
+    from nltk.sentiment.vader import SentimentIntensityAnalyzer
+    sia = SentimentIntensityAnalyzer()
+    sentiment_scores = sia.polarity_scores(content)
+    return sentiment_scores
+
+# Function to check website accessibility
+def check_accessibility(url: str) -> Dict[str, str]:
+    """
+    Check website accessibility using axe-selenium-python.
+    """
+    try:
+        from axe_selenium_python import Axe
+        from selenium import webdriver
+
+        # Set up Selenium WebDriver
+        options = Options()
+        options.add_argument("--headless")  # Run in headless mode
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver.get(url)
+
+        # Run accessibility tests
+        axe = Axe(driver)
+        axe.inject()  # Inject axe-core into the page
+        results = axe.run()  # Run accessibility tests
+
+        # Close the driver
+        driver.quit()
+
+        # Format results
+        accessibility_issues = {
+            "violations": results["violations"],
+            "incomplete": results["incomplete"],
+            "passes": results["passes"],
+        }
+        return accessibility_issues
+    except Exception as e:
+        st.error(f"Error checking accessibility: {str(e)}")
+        return {}
+
+# Function to measure website performance
+def measure_performance(url: str) -> Dict[str, float]:
+    """
+    Measure website performance using Google PageSpeed Insights API.
+    """
+    try:
+        import requests
+
+        # Google PageSpeed Insights API endpoint
+        api_key = "YOUR_GOOGLE_API_KEY"  # Replace with your Google API key
+        api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={api_key}"
+
+        # Make the API request
+        response = requests.get(api_url)
+        response.raise_for_status()
+        data = response.json()
+
+        # Extract performance metrics
+        performance_metrics = {
+            "load_time": data["lighthouseResult"]["audits"]["speed-index"]["numericValue"],
+            "page_size": data["lighthouseResult"]["audits"]["total-byte-weight"]["numericValue"],
+            "responsiveness": data["lighthouseResult"]["audits"]["first-contentful-paint"]["numericValue"],
+        }
+        return performance_metrics
+    except Exception as e:
+        st.error(f"Error measuring performance: {str(e)}")
+        return {}
+
+# Update the Website Analysis section to include new features
+if analysis_type == "Website Analysis":
+    st.subheader("Website Analysis")
+    website_url = st.text_input("Enter Website URL for Analysis")
+
+    # Competitor Analysis
+    st.sidebar.subheader("Competitor Analysis")
+    competitor_urls = st.sidebar.text_area("Enter Competitor URLs (one per line)", "").splitlines()
+
+    if st.button("Generate AI-Powered Report"):
+        if website_url:
+            with st.spinner("Analyzing website content..."):
+                # Scrape and analyze the main website
+                extracted_content = scrape_website_content_selenium(website_url)
+                if extracted_content:
+                    # Generate AI report
+                    report = generate_ai_report(extracted_content)
+                    if report:
+                        st.success("Analysis complete! Expand the sections above to view detailed insights.")
+                        st.download_button(
+                            label="Download Full Report",
+                            data=report,
+                            file_name="website_analysis_report.txt",
+                            mime="text/plain"
+                        )
+
+                        # SEO Analysis
+                        st.subheader("SEO Analysis")
+                        seo_results = perform_seo_analysis(website_url)
+                        if seo_results:
+                            st.write("### Meta Tags")
+                            st.json(seo_results["meta_tags"])
+                            st.write("### Headers")
+                            st.json(seo_results["headers"])
+                            st.write("### Keyword Density")
+                            st.write(seo_results["keyword_density"])
+                        else:
+                            st.warning("No SEO data found.")
+
+                        # Sentiment Analysis
+                        st.subheader("Sentiment Analysis")
+                        sentiment_scores = analyze_website_sentiment(extracted_content)
+                        st.write("### Sentiment Scores")
+                        st.json(sentiment_scores)
+
+                        # Accessibility Check
+                        st.subheader("Accessibility Check")
+                        accessibility_issues = check_accessibility(website_url)
+                        if accessibility_issues:
+                            st.write("### Accessibility Issues")
+                            st.json(accessibility_issues)
+                        else:
+                            st.warning("No accessibility issues found.")
+
+                        # Performance Metrics
+                        st.subheader("Performance Metrics")
+                        performance_metrics = measure_performance(website_url)
+                        if performance_metrics:
+                            st.write("### Performance Metrics")
+                            st.json(performance_metrics)
+                        else:
+                            st.warning("No performance data found.")
  # Competitor Analysis
     st.sidebar.subheader("Competitor Analysis")
     competitor_urls = st.sidebar.text_area("Enter Competitor URLs (one per line)", "").splitlines()
