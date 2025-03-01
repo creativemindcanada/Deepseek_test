@@ -170,6 +170,92 @@ def parse_ai_response(ai_response: str) -> Dict[str, str]:
 def display_structured_report(sections: Dict[str, str]):
     """Display the report with better error handling and formatting."""
     st.write("# Website Analysis Report")
+
+    # Function to calculate content quality score
+def calculate_content_quality_score(content: str) -> float:
+    """
+    Calculate a content quality score based on readability, length, and keyword density.
+    """
+    from textstat import flesch_reading_ease, syllable_count, lexicon_count
+    import re
+
+    # Calculate readability score
+    readability_score = flesch_reading_ease(content)
+
+    # Calculate word count
+    word_count = len(re.findall(r'\b\w+\b', content))
+
+    # Calculate keyword density (basic example: count of common words)
+    common_words = ["product", "service", "quality", "customer", "experience"]
+    keyword_density = sum(content.lower().count(word) for word in common_words) / word_count if word_count > 0 else 0
+
+    # Combine scores (weights can be adjusted)
+    quality_score = (readability_score * 0.4) + (word_count * 0.3) + (keyword_density * 0.3)
+    return round(quality_score, 2)
+
+# Function to generate actionable recommendations
+def generate_actionable_recommendations(sections: Dict[str, str]) -> List[str]:
+    """
+    Generate actionable recommendations based on the analysis.
+    """
+    recommendations = []
+
+    # Recommendations based on weaknesses
+    if sections.get("weaknesses"):
+        if "slow" in sections["weaknesses"].lower():
+            recommendations.append("🚀 **Improve website speed** by optimizing images and using a CDN.")
+        if "navigation" in sections["weaknesses"].lower():
+            recommendations.append("🧭 **Simplify navigation** by reducing menu items and adding a search bar.")
+        if "mobile" in sections["weaknesses"].lower():
+            recommendations.append("📱 **Optimize for mobile devices** by using responsive design.")
+
+    # Recommendations based on content
+    if sections.get("content"):
+        if "outdated" in sections["content"].lower():
+            recommendations.append("📅 **Update content regularly** to keep it relevant and engaging.")
+        if "length" in sections["content"].lower():
+            recommendations.append("✂️ **Break up long content** into smaller sections with headings.")
+
+    # Default recommendations if no specific weaknesses are found
+    if not recommendations:
+        recommendations.append("🌟 **Focus on user experience** by gathering feedback and making iterative improvements.")
+
+    return recommendations
+
+# Function to display visualizations
+def display_website_visualizations(sections: Dict[str, str]):
+    """
+    Display visualizations for website analysis.
+    """
+    st.subheader("📊 Visualizations")
+
+    # Word cloud for main content
+    if sections.get("main_content"):
+        from wordcloud import WordCloud
+        import matplotlib.pyplot as plt
+
+        st.write("### Word Cloud for Main Content")
+        wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(sections["main_content"]))
+        plt.figure(figsize=(10, 5))
+        plt.imshow(wordcloud, interpolation='bilinear')
+        plt.axis("off")
+        st.pyplot(plt)
+
+    # Bar chart for content quality
+    if sections.get("content"):
+        st.write("### Content Quality Score")
+        quality_score = calculate_content_quality_score(sections["content"])
+        st.metric("Quality Score", quality_score)
+
+        # Display quality score as a bar chart
+        fig = px.bar(x=["Content Quality"], y=[quality_score], labels={"x": "Metric", "y": "Score"}, text=[quality_score])
+        fig.update_traces(textposition='auto')
+        st.plotly_chart(fig)
+
+# Update the display_structured_report function to include visualizations and recommendations
+def display_structured_report(sections: Dict[str, str]):
+    """Display the report with visualizations and actionable recommendations."""
+    st.write("# Website Analysis Report")
     
     # Overview
     with st.expander("📋 Overview", expanded=True):
