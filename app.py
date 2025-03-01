@@ -256,6 +256,9 @@ with st.sidebar.expander("ℹ️ Help"):
     - **Dark Mode**: Toggle dark mode for better visibility in low-light environments.
     - **Clear Data**: Reset the app to its initial state.
     """)
+# Clear data button
+if st.sidebar.button("🧹 Clear Data"):
+    clear_data()
 
 if analysis_type == "Customer Data Analysis":
     # Upload customer data
