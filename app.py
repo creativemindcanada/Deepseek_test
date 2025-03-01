@@ -659,7 +659,9 @@ if analysis_type == "Customer Data Analysis":
 elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
     st.subheader("Website Analysis")
     website_url = st.text_input("Enter Website URL for Analysis")
-
+ # Competitor Analysis
+    st.sidebar.subheader("Competitor Analysis")
+    competitor_urls = st.sidebar.text_area("Enter Competitor URLs (one per line)", "").splitlines()
     if st.button("Generate AI-Powered Report"):
         if website_url:
             with st.spinner("Analyzing website content..."):
