@@ -11,3 +11,6 @@ torch  # or tensorflow
 selenium
 webdriver-manager
 pipeline
+textstat
+wordcloud
+matplotlib
