@@ -20,20 +20,6 @@ nltk.download('vader_lexicon')
 
 # Title of the app
 st.title("Customer Insights Dashboard")
-# Dark mode toggle
-dark_mode = st.sidebar.checkbox("🌙 Dark Mode")
-if dark_mode:
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            background-color: #1E1E1E;
-            color: #FFFFFF;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
 
 # Preload the model when the app starts
 @st.cache_resource  # Cache the model to avoid reloading on every interaction
@@ -92,28 +78,6 @@ def predict_churn(data):
         st.warning("Required columns for churn prediction are missing. Using default churn risk of 0.")
         data['churn_risk'] = 0  # Default churn risk if columns are missing
     return data
-# Function to clear session state
-def clear_data():
-    st.session_state.pop('data', None)
-    st.toast("Data cleared successfully!", icon="✅")
-
-
-# Help section in the sidebar
-with st.sidebar.expander("ℹ️ Help"):
-    st.write("""
-    - **Customer Data Analysis**: Upload a CSV file or use randomly generated data to analyze customer insights.
-    - **Website Analysis**: Enter a website URL to generate an AI-powered analysis report.
-    - **Dark Mode**: Toggle dark mode for better visibility in low-light environments.
-    - **Clear Data**: Reset the app to its initial state.
-    """)
-
-# Clear data button
-if st.sidebar.button("🧹 Clear Data"):
-    clear_data()
-
-if analysis_type == "Customer Data Analysis":
-    # Upload customer data
-    uploaded_file = st.file_uploader("Upload your customer data (CSV file)", type=["csv"])
 
 def create_structured_prompt(extracted_content: str) -> str:
     """Create a more concise prompt that works better with distilgpt2."""
@@ -259,8 +223,6 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
-
-
 # Main dashboard layout
 st.sidebar.title("Navigation")
 analysis_type = st.sidebar.radio("Choose Analysis Type", ["Customer Data Analysis", "Website Analysis"])
