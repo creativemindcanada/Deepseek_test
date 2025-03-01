@@ -14,3 +14,4 @@ pipeline
 textstat
 wordcloud
 matplotlib
+axe-selenium-python
