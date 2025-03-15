@@ -98,73 +98,65 @@ def predict_churn(data):
     return data
 
 def create_structured_prompt(extracted_content: str) -> str:
-    """Business-focused prompt"""
-    return f"""
-Analyze this business website to identify:
-1) CORE BUSINESS MODEL:
-   - What specific problems does this company solve?
-   - What solutions/products do they offer?
-   - What pricing model is implied?
-
-2) GO-TO-MARKET STRATEGY:
-   - Which channels are they using (social media, blogs)?
-   - What customer evidence are they showcasing?
-   - How do they position themselves?
-
-3) CLIENT ANALYSIS:
-   - List key clients mentioned
-   - For 3 main clients: Problem → Solution → Outcome
-   - Any missing client industries/types?
-
-4) FUTURE RISKS:
-   - What current limitations appear in testimonials?
-   - What market needs are they not addressing?
-   - What technical/support gaps exist?
+    return f"""ANALYSIS REQUIRED:
+1. [Business Model] Describe core offerings and value proposition
+2. [GTM Strategy] Identify marketing channels and positioning
+3. [Client Analysis] List key clients and their use cases 
+4. [Future Risks] Highlight potential challenges
 
 WEBSITE CONTENT:
 {extracted_content}
-"""
+
+FORMAT YOUR RESPONSE WITH CLEAR SECTION HEADERS STARTING WITH #"""
 
 def parse_ai_response(ai_response: str) -> Dict[str, str]:
-    """Parse business-focused response"""
+    """Improved parser with flexible section detection"""
     sections = {
-        "business_model": "",
-        "gtm_strategy": "",
-        "client_analysis": "",
-        "future_risks": ""
+        "business_model": [],
+        "gtm_strategy": [],
+        "client_analysis": [], 
+        "future_risks": []
     }
     
     current_section = None
+    section_patterns = {
+        "business_model": ["business model", "core offering"],
+        "gtm_strategy": ["go-to-market", "gtm", "market strategy"],
+        "client_analysis": ["client analysis", "case studies"],
+        "future_risks": ["future risks", "limitations", "weaknesses"]
+    }
+
     for line in ai_response.split('\n'):
-        line_lower = line.lower()
-        if "core business model" in line_lower:
-            current_section = "business_model"
-        elif "go-to-market" in line_lower:
-            current_section = "gtm_strategy"
-        elif "client analysis" in line_lower:
-            current_section = "client_analysis"
-        elif "future risks" in line_lower:
-            current_section = "future_risks"
-        elif current_section and line.strip():
-            sections[current_section] += line + "\n"
-    
-    return sections
-def display_structured_report(sections: Dict[str, str]):
-    """Business-focused display"""
-    st.write("# Strategic Business Analysis")
-    
-    with st.expander("💼 Business Model", expanded=True):
-        st.markdown(sections.get("business_model", "Analysis pending..."))
+        line_lower = line.strip().lower()
         
-    with st.expander("🚀 GTM Strategy"):
-        st.markdown(sections.get("gtm_strategy", "Analysis pending..."))
+        # Check for section headers
+        for section, keywords in section_patterns.items():
+            if any(keyword in line_lower for keyword in keywords):
+                current_section = section
+                break
+                
+        # Add content to current section
+        if current_section and line.strip() and not line_lower.startswith(("#", "---")):
+            sections[current_section].append(line.strip())
+    
+    # Convert lists to strings with bullets
+    return {k: "\n".join([f"- {item}" for item in v]) if v else "Analysis pending." 
+            for k, v in sections.items()}
+def display_structured_report(sections: Dict[str, str]):
+    """Improved business-focused display"""
+    st.write("# Strategic Business Report")
+    
+    with st.expander("💼 Core Business Model", expanded=True):
+        st.markdown(sections["business_model"])
+        
+    with st.expander("🚀 Market Strategy"):
+        st.markdown(sections["gtm_strategy"])
         
     with st.expander("📈 Client Insights"):
-        st.markdown(sections.get("client_analysis", "Analysis pending..."))
+        st.markdown(sections["client_analysis"])
         
     with st.expander("⚠️ Risk Assessment"):
-        st.markdown(sections.get("future_risks", "Analysis pending..."))
-        
+        st.markdown(sections["future_risks"])
     # Add summary metrics
     st.subheader("Key Metrics")
     cols = st.columns(4)
@@ -236,42 +228,7 @@ def display_website_visualizations(sections: Dict[str, str]):
         fig.update_traces(textposition='auto')
         st.plotly_chart(fig)
 
-# Update the display_structured_report function to include visualizations and recommendations
-def display_structured_report(sections: Dict[str, str]):
-    """Display the report with visualizations and actionable recommendations."""
-    st.write("# Website Analysis Report")
-    
-    # Overview
-    with st.expander("📋 Overview", expanded=True):
-        content = sections.get("overview", "Analysis pending.")
-        st.markdown(content if content.strip() else "No overview available.")
-    
-    # Content Analysis
-    with st.expander("📊 Content Analysis"):
-        content = sections.get("content", "Analysis pending.")
-        st.markdown(content if content.strip() else "No content analysis available.")
-    
-    # Engagement
-    with st.expander("🤝 Engagement Assessment"):
-        content = sections.get("engagement", "Analysis pending.")
-        st.markdown(content if content.strip() else "No engagement analysis available.")
-    
-    # Strengths & Weaknesses
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("💪 Strengths")
-        content = sections.get("strengths", "Analysis pending.")
-        st.markdown(content if content.strip() else "No strengths listed.")
-    
-    with col2:
-        st.subheader("🎯 Areas for Improvement")
-        content = sections.get("weaknesses", "Analysis pending.")
-        st.markdown(content if content.strip() else "No weaknesses listed.")
-    
-    # Recommendations
-    with st.expander("💡 Recommendations", expanded=True):
-        content = sections.get("recommendations", "Analysis pending.")
-        st.markdown(content if content.strip() else "No recommendations available.")
+
 
 def generate_ai_report(extracted_content: str) -> Optional[str]:
     """Generate AI report with better error handling and model parameters."""
