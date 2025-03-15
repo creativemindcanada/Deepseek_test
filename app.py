@@ -427,16 +427,7 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
-  # Configure Chrome for headless mode
-        chrome_options = Options()
-        chrome_options.add_argument("--headless=new")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        
-        driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
-            options=chrome_options
-        )
+ 
         # Remove unwanted elements
         for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
             element.decompose()
