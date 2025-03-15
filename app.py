@@ -520,7 +520,7 @@ BUSINESS ANALYSIS DATA:
    - Blog Posts: {content['blog_posts'][:3]}
 
 3. Main Content:
-   {'. '.join([p for p in soup.find_all('p')[:3] if p.text.strip()])}
+'. '.join([p.text.strip() for p in soup.find_all('p')[:3] if p.text.strip()])
 """
         return formatted_content
 
