@@ -1,3 +1,5 @@
+import time  # For loading spinner
+from wordcloud import WordCloud  # For visualizations
 import re 
 import streamlit as st
 from selenium import webdriver
