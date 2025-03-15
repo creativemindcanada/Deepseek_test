@@ -590,16 +590,17 @@ elif analysis_type == "Website Analysis":
                 extracted_content = scrape_website_content_selenium(website_url)
                 if extracted_content:
                     report = generate_ai_report(extracted_content)
-                        if report:
-                            st.success("Analysis complete! Expand the sections above to view detailed insights.")
-                            st.download_button(
-                                label="Download Full Report",
-                                data=report,
-                                file_name="website_analysis_report.txt",
-                                mime="text/plain"
-                            )
-                        else:
-                            st.error("Failed to generate the AI report.")
+                    # Fixed indentation from here
+                    if report:
+                        st.success("Analysis complete! Expand the sections above to view detailed insights.")
+                        st.download_button(
+                            label="Download Full Report",
+                            data=report,
+                            file_name="website_analysis_report.txt",
+                            mime="text/plain"
+                        )
+                    else:
+                        st.error("Failed to generate the AI report.")
                 else:
                     st.error("Failed to scrape website content.")
         else:
