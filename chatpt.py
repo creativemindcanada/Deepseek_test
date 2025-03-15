@@ -89,33 +89,32 @@ def predict_churn(data):
 
 # Create a structured prompt for AI analysis
 def create_structured_prompt(extracted_content: str) -> str:
+    """
+    Create a prompt that instructs the AI to return analysis in a clearly structured format.
+    """
     return f"""
-Analyze this business website to identify:
-1) CORE BUSINESS MODEL:
-   - What specific problems does this company solve?
-   - What solutions/products do they offer?
-   - What pricing model is implied?
+Please analyze the following website content and provide a detailed business analysis. Your response MUST follow exactly the format below:
 
-2) GO-TO-MARKET STRATEGY:
-   - Which channels are they using (social media, blogs)?
-   - What customer evidence are they showcasing?
-   - How do they position themselves?
+CORE BUSINESS MODEL:
+<Describe what problems the company solves, the solutions/products offered, and any implied pricing model.>
 
-3) CLIENT ANALYSIS:
-   - List key clients mentioned
-   - For 3 main clients: Problem → Solution → Outcome
-   - Any missing client industries/types?
+GO-TO-MARKET STRATEGY:
+<Describe the channels used (social media, blogs, etc.), customer evidence showcased, and how the company positions itself.>
 
-4) FUTURE RISKS:
-   - What current limitations appear in testimonials?
-   - What market needs are they not addressing?
-   - What technical/support gaps exist?
+CLIENT ANALYSIS:
+<List key clients mentioned. For three main clients, outline the Problem → Solution → Outcome. Also, note any missing client industries/types.>
 
-WEBSITE CONTENT:
+FUTURE RISKS:
+<Describe current limitations in testimonials, market needs that are not addressed, and any technical or support gaps.>
+
+Website Content for Analysis:
 {extracted_content}
 """
 
-def parse_ai_response(ai_response: str) -> Dict[str, str]:
+def parse_ai_response(ai_response: str) -> dict:
+    """
+    Parse the AI response by looking for the defined section headers.
+    """
     sections = {
         "business_model": "",
         "gtm_strategy": "",
@@ -125,38 +124,40 @@ def parse_ai_response(ai_response: str) -> Dict[str, str]:
     current_section = None
     for line in ai_response.split('\n'):
         line_lower = line.lower()
-        if "core business model" in line_lower:
+        if "core business model:" in line_lower:
             current_section = "business_model"
-        elif "go-to-market" in line_lower:
+        elif "go-to-market strategy:" in line_lower:
             current_section = "gtm_strategy"
-        elif "client analysis" in line_lower:
+        elif "client analysis:" in line_lower:
             current_section = "client_analysis"
-        elif "future risks" in line_lower:
+        elif "future risks:" in line_lower:
             current_section = "future_risks"
         elif current_section and line.strip():
             sections[current_section] += line + "\n"
     return sections
 
-def display_structured_report(sections: Dict[str, str]):
-    st.write("# Website Analysis Report")
-    with st.expander("📋 Overview", expanded=True):
-        content = sections.get("business_model", "Analysis pending.")
-        st.markdown(content if content.strip() else "No overview available.")
-    with st.expander("🚀 GTM Strategy"):
-        content = sections.get("gtm_strategy", "Analysis pending.")
-        st.markdown(content if content.strip() else "No GTM analysis available.")
-    with st.expander("📈 Client Insights"):
-        content = sections.get("client_analysis", "Analysis pending.")
-        st.markdown(content if content.strip() else "No client analysis available.")
-    with st.expander("⚠️ Risk Assessment"):
-        content = sections.get("future_risks", "Analysis pending.")
-        st.markdown(content if content.strip() else "No risk assessment available.")
+def display_structured_report(sections: dict, full_text: str):
+    """
+    If structured sections are empty, display full text as a fallback.
+    """
+    if not any(sections.values()):
+        st.write("### Full AI Generated Report")
+        st.markdown(full_text)
+    else:
+        st.write("# Website Analysis Report")
+        with st.expander("📋 Overview (Core Business Model)", expanded=True):
+            st.markdown(sections.get("business_model", "Analysis pending..."))
+        with st.expander("🚀 GTM Strategy"):
+            st.markdown(sections.get("gtm_strategy", "Analysis pending..."))
+        with st.expander("📈 Client Insights"):
+            st.markdown(sections.get("client_analysis", "Analysis pending..."))
+        with st.expander("⚠️ Risk Assessment"):
+            st.markdown(sections.get("future_risks", "Analysis pending..."))
 
-# Generate AI report using the free transformer model
 def generate_ai_report(extracted_content: str) -> Optional[str]:
     try:
         prompt = create_structured_prompt(extracted_content)
-        generated_text = generator(
+        generated = generator(
             prompt,
             max_new_tokens=500,
             num_return_sequences=1,
@@ -166,15 +167,16 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
             no_repeat_ngram_size=2,
             num_beams=1,
             early_stopping=True
-        )[0]["generated_text"]
-        response_text = generated_text.replace(prompt, "").strip()
-        sections = parse_ai_response(response_text)
-        display_structured_report(sections)
-        return generated_text
+        )[0]
+        full_response = generated["generated_text"].replace(prompt, "").strip()
+        sections = parse_ai_response(full_response)
+        display_structured_report(sections, full_response)
+        return full_response
     except Exception as e:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
+
 
 # Clear session data
 def clear_data():
