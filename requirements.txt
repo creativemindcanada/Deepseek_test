@@ -15,3 +15,4 @@ textstat
 wordcloud
 matplotlib
 axe-selenium-python
+python-dotenv
