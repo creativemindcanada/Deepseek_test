@@ -95,9 +95,32 @@ def predict_churn(data):
     return data
 
 def create_structured_prompt(extracted_content: str) -> str:
-    """Create a more concise prompt that works better with distilgpt2."""
+    """Business-focused prompt"""
     return f"""
-Website Content Analysis:
+Analyze this business website to identify:
+1) CORE BUSINESS MODEL:
+   - What specific problems does this company solve?
+   - What solutions/products do they offer?
+   - What pricing model is implied?
+
+2) GO-TO-MARKET STRATEGY:
+   - Which channels are they using (social media, blogs)?
+   - What customer evidence are they showcasing?
+   - How do they position themselves?
+
+3) CLIENT ANALYSIS:
+   - List key clients mentioned
+   - For 3 main clients: Problem → Solution → Outcome
+   - Any missing client industries/types?
+
+4) FUTURE RISKS:
+   - What current limitations appear in testimonials?
+   - What market needs are they not addressing?
+   - What technical/support gaps exist?
+
+WEBSITE CONTENT:
+{extracted_content}
+"""Website Content Analysis:
 {extracted_content}
 
 Please analyze this website and provide:
@@ -122,76 +145,56 @@ Suggested improvements
 """
 
 def parse_ai_response(ai_response: str) -> Dict[str, str]:
-    """Parse the AI response with more robust section detection."""
+    """Parse business-focused response"""
     sections = {
-        "overview": "",
-        "content": "",
-        "engagement": "",
-        "strengths": "",
-        "weaknesses": "",
-        "recommendations": ""
+        "business_model": "",
+        "gtm_strategy": "",
+        "client_analysis": "",
+        "future_risks": ""
     }
     
-    current_section = "overview"
-    try:
-        # Split the response into lines and clean up
-        lines = [line.strip() for line in ai_response.split('\n') if line.strip()]
-        
-        # Process each line
-        for line in lines:
-            # Check for section headers
-            lower_line = line.lower()
-            if "overview" in lower_line:
-                current_section = "overview"
-            elif "content" in lower_line:
-                current_section = "content"
-            elif "engagement" in lower_line:
-                current_section = "engagement"
-            elif "strength" in lower_line:
-                current_section = "strengths"
-            elif "weakness" in lower_line:
-                current_section = "weaknesses"
-            elif "recommend" in lower_line:
-                current_section = "recommendations"
-            else:
-                # Add content to current section
-                if sections[current_section]:
-                    sections[current_section] += "\n"
-                sections[current_section] += line
-    except Exception as e:
-        st.error(f"Error parsing AI response: {str(e)}")
-        # Provide default content for sections
-        for key in sections:
-            if not sections[key]:
-                sections[key] = "Analysis pending."
+    current_section = None
+    for line in ai_response.split('\n'):
+        line_lower = line.lower()
+        if "core business model" in line_lower:
+            current_section = "business_model"
+        elif "go-to-market" in line_lower:
+            current_section = "gtm_strategy"
+        elif "client analysis" in line_lower:
+            current_section = "client_analysis"
+        elif "future risks" in line_lower:
+            current_section = "future_risks"
+        elif current_section and line.strip():
+            sections[current_section] += line + "\n"
     
     return sections
-
 def display_structured_report(sections: Dict[str, str]):
-    """Display the report with better error handling and formatting."""
-    st.write("# Website Analysis Report")
-
-    # Function to calculate content quality score
-def calculate_content_quality_score(content: str) -> float:
-    """
-    Calculate a content quality score based on readability, length, and keyword density.
-    """
-    from textstat import flesch_reading_ease, syllable_count, lexicon_count
-    import re
-
-    # Calculate readability score
-    readability_score = flesch_reading_ease(content)
-
-    # Calculate word count
-    word_count = len(re.findall(r'\b\w+\b', content))
-
-    # Calculate keyword density (basic example: count of common words)
-    common_words = ["product", "service", "quality", "customer", "experience"]
-    keyword_density = sum(content.lower().count(word) for word in common_words) / word_count if word_count > 0 else 0
-
-    # Combine scores (weights can be adjusted)
-    quality_score = (readability_score * 0.4) + (word_count * 0.3) + (keyword_density * 0.3)
-    return round(quality_score, 2)
+    """Business-focused display"""
+    st.write("# Strategic Business Analysis")
+    
+    with st.expander("💼 Business Model", expanded=True):
+        st.markdown(sections.get("business_model", "Analysis pending..."))
+        
+    with st.expander("🚀 GTM Strategy"):
+        st.markdown(sections.get("gtm_strategy", "Analysis pending..."))
+        
+    with st.expander("📈 Client Insights"):
+        st.markdown(sections.get("client_analysis", "Analysis pending..."))
+        
+    with st.expander("⚠️ Risk Assessment"):
+        st.markdown(sections.get("future_risks", "Analysis pending..."))
+        
+    # Add summary metrics
+    st.subheader("Key Metrics")
+    cols = st.columns(4)
+    with cols[0]:
+        st.metric("Clients Listed", len(re.findall(r"\bClient:", sections["client_analysis"])))
+    with cols[1]:
+        st.metric("Social Channels", len(sections["gtm_strategy"].split("Channel:"))-1)
+    with cols[2]:
+        st.metric("Key Solutions", len(re.findall(r"\bSolution:", sections["business_model"])))
+    with cols[3]:
+        st.metric("Identified Risks", len(re.findall(r"\-\s", sections["future_risks"])))
 
 # Function to generate actionable recommendations
 def generate_actionable_recommendations(sections: Dict[str, str]) -> List[str]:
@@ -466,140 +469,83 @@ if analysis_type == "Customer Data Analysis":
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
 def scrape_website_content_selenium(website_url: str) -> Optional[str]:
-    """
-    Scrape and extract content from a website with improved error handling and content processing.
-    """
+    """Enhanced scraping focusing on business insights extraction"""
     try:
-        # Validate URL format
         if not website_url.startswith(('http://', 'https://')):
             website_url = 'https://' + website_url
 
-        # Set up headers to mimic a browser request
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
         }
 
-        # Make the request with timeout
-        response = requests.get(
-            website_url,
-            headers=headers,
-            timeout=15,
-            verify=True  # Enable SSL verification
-        )
+        response = requests.get(website_url, headers=headers, timeout=15)
         response.raise_for_status()
 
-        # Check if response is HTML
-        content_type = response.headers.get('content-type', '').lower()
-        if 'text/html' not in content_type:
-            st.error(f"Invalid content type: {content_type}. Please provide a valid website URL.")
-            return None
-
-        # Parse the content
         soup = BeautifulSoup(response.text, "html.parser")
 
         # Remove unwanted elements
         for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
             element.decompose()
 
-        # Initialize content dictionary
+        # Enhanced content extraction
         content = {
-            "title": "",
-            "meta_description": "",
-            "main_content": [],
-            "navigation": [],
-            "products_services": [],
-            "about": [],
-            "contact": []
+            "success_stories": [],
+            "testimonials": [],
+            "use_cases": [],
+            "blog_posts": [],
+            "social_links": {},
+            "client_list": [],
+            "main_content": []
         }
 
-        # Extract title
-        if soup.title:
-            content["title"] = soup.title.string.strip() if soup.title.string else ""
+        # Extract success stories/testimonials
+        for section in soup.find_all(['div', 'section'], class_=re.compile(r'testimonial|review|case-study', re.I)):
+            content["testimonials"].extend([p.text.strip() for p in section.find_all('p') if p.text.strip()])
 
-        # Extract meta description
-        meta_desc = soup.find('meta', attrs={'name': 'description'})
-        if meta_desc:
-            content["meta_description"] = meta_desc.get('content', '').strip()
+        # Extract client use cases
+        use_case_section = soup.find(['div', 'section'], string=re.compile(r'case studies|use cases', re.I))
+        if use_case_section:
+            content["use_cases"] = [case.text.strip() for case in use_case_section.find_all(['div', 'li'])]
 
-        # Extract main content
-        main_content = soup.find(['main', 'article', 'div'], class_=['content', 'main', 'main-content'])
-        if main_content:
-            content["main_content"] = [p.text.strip() for p in main_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']) if p.text.strip()]
+        # Extract blog posts
+        blog_section = soup.find(['div', 'section'], string=re.compile(r'blog|articles', re.I))
+        if blog_section:
+            content["blog_posts"] = [post.text.strip() for post in blog_section.find_all(['article', 'div'])]
 
-        # Extract navigation
-        nav = soup.find(['nav', 'menu'])
-        if nav:
-            content["navigation"] = [link.text.strip() for link in nav.find_all('a') if link.text.strip()]
+        # Extract social media links
+        social_links = soup.find_all('a', href=re.compile(
+            r'linkedin\.com|twitter\.com|facebook\.com|instagram\.com', re.I))
+        for link in social_links:
+            platform = re.search(r'(linkedin|twitter|facebook|instagram)', link['href'], re.I)
+            if platform:
+                content["social_links"][platform.group(1).lower()] = link['href']
 
-        # Extract products/services
-        products_section = soup.find(['div', 'section'], string=lambda text: text and any(word in text.lower() for word in ['product', 'service']))
-        if products_section:
-            content["products_services"] = [item.text.strip() for item in products_section.find_all(['p', 'li', 'h3']) if item.text.strip()]
+        # Extract client list
+        client_section = soup.find(['div', 'section'], string=re.compile(r'clients|partners', re.I))
+        if client_section:
+            content["client_list"] = [img['alt'] for img in client_section.find_all('img') if 'client' in img.get('alt', '').lower()]
 
-        # Extract about information
-        about_section = soup.find(['div', 'section'], string=lambda text: text and 'about' in text.lower())
-        if about_section:
-            content["about"] = [item.text.strip() for item in about_section.find_all(['p', 'li']) if item.text.strip()]
-
-        # Extract contact information
-        contact_section = soup.find(['div', 'section'], string=lambda text: text and 'contact' in text.lower())
-        if contact_section:
-            content["contact"] = [item.text.strip() for item in contact_section.find_all(['p', 'li']) if item.text.strip()]
-
-        # Format the extracted content
+        # Format for AI analysis
         formatted_content = f"""
-Website: {website_url}
+BUSINESS ANALYSIS DATA:
+1. Customer Evidence:
+   - Testimonials: {content['testimonials'][:5]}
+   - Use Cases: {content['use_cases'][:5]}
+   - Clients: {content['client_list'][:10]}
 
-Title: {content['title']}
+2. Digital Presence:
+   - Social Media: {content['social_links']}
+   - Blog Posts: {content['blog_posts'][:3]}
 
-Description: {content['meta_description']}
-
-Navigation Menu:
-{chr(10).join([f"- {item}" for item in content['navigation'][:5]])}
-
-Main Content:
-{chr(10).join([f"- {item}" for item in content['main_content'][:10]])}
-
-Products/Services:
-{chr(10).join([f"- {item}" for item in content['products_services'][:5]])}
-
-About Information:
-{chr(10).join([f"- {item}" for item in content['about'][:5]])}
-
-Contact Information:
-{chr(10).join([f"- {item}" for item in content['contact'][:5]])}
+3. Main Content:
+   {'. '.join([p for p in soup.find_all('p')[:3] if p.text.strip()])}
 """
-        
-        # Check if we got meaningful content
-        if not any([content['main_content'], content['products_services'], content['about'], content['contact']]):
-            st.warning("Limited content could be extracted from this website. The analysis may be incomplete.")
-            
         return formatted_content
 
-    except requests.exceptions.MissingSchema:
-        st.error("Invalid URL. Please include 'http://' or 'https://' in the URL.")
-        return None
-    except requests.exceptions.ConnectionError:
-        st.error("Could not connect to the website. Please check the URL and try again.")
-        return None
-    except requests.exceptions.Timeout:
-        st.error("The request timed out. Please try again later.")
-        return None
-    except requests.exceptions.TooManyRedirects:
-        st.error("Too many redirects. Please check the URL.")
-        return None
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred while fetching the website: {str(e)}")
-        return None
     except Exception as e:
-        st.error(f"An unexpected error occurred: {str(e)}")
+        st.error(f"Scraping error: {str(e)}")
         return None
-
-
 # Function to optimize AI report generation with caching
 @st.cache_data(ttl=3600)  # Cache results for 1 hour
 def generate_ai_report_optimized(extracted_content: str) -> Optional[str]:
@@ -656,17 +602,16 @@ if analysis_type == "Customer Data Analysis":
     # Customer data logic here  
     st.sidebar.write("Analyzing customer data...")  
 
-elif analysis_type == "Website Analysis":  # Ensure this is properly aligned
-    st.subheader("Website Analysis")
-    website_url = st.text_input("Enter Website URL for Analysis")
-
-    if st.button("Generate AI-Powered Report"):
+elif analysis_type == "Website Analysis":
+    st.subheader("Strategic Business Analysis")
+    website_url = st.text_input("Enter Company Website URL")
+    
+    if st.button("Generate Business Report"):
         if website_url:
-            with st.spinner("Analyzing website content..."):
+            with st.spinner("Analyzing business model..."):
                 extracted_content = scrape_website_content_selenium(website_url)
                 if extracted_content:
-                    with st.spinner("Generating structured AI report..."):
-                        report = generate_ai_report(extracted_content)
+                    report = generate_ai_report(extracted_content)
                         if report:
                             st.success("Analysis complete! Expand the sections above to view detailed insights.")
                             st.download_button(
