@@ -588,9 +588,7 @@ def generate_ai_report_optimized(extracted_content: str) -> Optional[str]:
 
 # Function to add a loading spinner with progress bar
 def show_loading_spinner(message: str):
-    """
-    Display a loading spinner with a progress bar for long-running tasks.
-    """
+    
     with st.spinner(message):
         progress_bar = st.progress(0)
         for i in range(100):
