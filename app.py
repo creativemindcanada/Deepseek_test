@@ -120,28 +120,6 @@ Analyze this business website to identify:
 
 WEBSITE CONTENT:
 {extracted_content}
-"""Website Content Analysis:
-{extracted_content}
-
-Please analyze this website and provide:
-
-OVERVIEW:
-Key features and target audience
-
-CONTENT:
-Quality and organization assessment
-
-ENGAGEMENT:
-User interaction and accessibility
-
-STRENGTHS:
-Main positive aspects
-
-WEAKNESSES:
-Areas for improvement
-
-RECOMMENDATIONS:
-Suggested improvements
 """
 
 def parse_ai_response(ai_response: str) -> Dict[str, str]:
