@@ -90,22 +90,25 @@ def predict_churn(data):
 # Create a structured prompt for AI analysis
 def create_structured_prompt(extracted_content: str) -> str:
     """
-    Create a prompt that instructs the AI to return analysis in a clearly structured format.
+    Create a detailed prompt with explicit instructions to analyze only the provided website content.
     """
     return f"""
-Please analyze the following website content and provide a detailed business analysis. Your response MUST follow exactly the format below:
+You are a business analyst. Analyze only the following website content and do NOT include any information that is not present in the text. Your response MUST follow exactly the format below and should be based solely on the provided content.
 
+Format:
 CORE BUSINESS MODEL:
-<Describe what problems the company solves, the solutions/products offered, and any implied pricing model.>
+<Describe the problems solved, products/services offered, and any pricing or business model information mentioned in the text.>
 
 GO-TO-MARKET STRATEGY:
-<Describe the channels used (social media, blogs, etc.), customer evidence showcased, and how the company positions itself.>
+<Describe the marketing channels, customer evidence, or positioning details explicitly mentioned.>
 
 CLIENT ANALYSIS:
-<List key clients mentioned. For three main clients, outline the Problem → Solution → Outcome. Also, note any missing client industries/types.>
+<List any key clients, customer testimonials, or references to client success stories that are present in the text. Provide specific details if available.>
 
 FUTURE RISKS:
-<Describe current limitations in testimonials, market needs that are not addressed, and any technical or support gaps.>
+<Describe any limitations, risks, or gaps mentioned in the text related to the business operations or market challenges.>
+
+DO NOT generate any additional details or fictional information.
 
 Website Content for Analysis:
 {extracted_content}
@@ -123,22 +126,28 @@ def parse_ai_response(ai_response: str) -> dict:
     }
     current_section = None
     for line in ai_response.split('\n'):
-        line_lower = line.lower()
-        if "core business model:" in line_lower:
+        line_lower = line.lower().strip()
+        if line_lower.startswith("core business model:"):
             current_section = "business_model"
-        elif "go-to-market strategy:" in line_lower:
+            continue
+        elif line_lower.startswith("go-to-market strategy:"):
             current_section = "gtm_strategy"
-        elif "client analysis:" in line_lower:
+            continue
+        elif line_lower.startswith("client analysis:"):
             current_section = "client_analysis"
-        elif "future risks:" in line_lower:
+            continue
+        elif line_lower.startswith("future risks:"):
             current_section = "future_risks"
-        elif current_section and line.strip():
-            sections[current_section] += line + "\n"
+            continue
+        if current_section and line.strip():
+            sections[current_section] += line.strip() + " "
+    # Clean up extra spaces
+    sections = {k: v.strip() for k, v in sections.items()}
     return sections
 
 def display_structured_report(sections: dict, full_text: str):
     """
-    If structured sections are empty, display full text as a fallback.
+    Display structured report if sections are available; otherwise, show full text.
     """
     if not any(sections.values()):
         st.write("### Full AI Generated Report")
@@ -161,9 +170,9 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
             prompt,
             max_new_tokens=500,
             num_return_sequences=1,
-            temperature=0.7,
-            top_p=0.9,
-            do_sample=True,
+            temperature=0.3,  # Lower temperature for more focused output
+            top_p=1.0,
+            do_sample=False,  # Disable sampling to reduce randomness
             no_repeat_ngram_size=2,
             num_beams=1,
             early_stopping=True
@@ -176,7 +185,6 @@ def generate_ai_report(extracted_content: str) -> Optional[str]:
         st.error(f"An error occurred while generating the AI report: {str(e)}")
         st.info("Try refreshing the page and running the analysis again.")
         return None
-
 
 # Clear session data
 def clear_data():
