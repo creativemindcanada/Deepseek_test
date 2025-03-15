@@ -449,6 +449,10 @@ if analysis_type == "Customer Data Analysis":
         )
     else:
         st.info("Please upload a CSV file or click the button to use randomly generated data.")
+# Add this import at the very top with other imports
+import re  # Required for regular expressions
+
+# Then replace your existing scrape_website_content_selenium function with this:
 def scrape_website_content_selenium(website_url: str) -> Optional[str]:
     """Enhanced scraping focusing on business insights extraction"""
     try:
@@ -480,19 +484,29 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
             "main_content": []
         }
 
-        # Extract success stories/testimonials
+        # Extract success stories/testimonials (fixed text extraction)
         for section in soup.find_all(['div', 'section'], class_=re.compile(r'testimonial|review|case-study', re.I)):
-            content["testimonials"].extend([p.text.strip() for p in section.find_all('p') if p.text.strip()])
+            content["testimonials"].extend([
+                p.get_text(separator=" ", strip=True) 
+                for p in section.find_all('p') 
+                if p.get_text(strip=True)
+            ])
 
-        # Extract client use cases
+        # Extract client use cases (fixed text extraction)
         use_case_section = soup.find(['div', 'section'], string=re.compile(r'case studies|use cases', re.I))
         if use_case_section:
-            content["use_cases"] = [case.text.strip() for case in use_case_section.find_all(['div', 'li'])]
+            content["use_cases"] = [
+                case.get_text(separator=" ", strip=True) 
+                for case in use_case_section.find_all(['div', 'li'])
+            ]
 
-        # Extract blog posts
+        # Extract blog posts (fixed text extraction)
         blog_section = soup.find(['div', 'section'], string=re.compile(r'blog|articles', re.I))
         if blog_section:
-            content["blog_posts"] = [post.text.strip() for post in blog_section.find_all(['article', 'div'])]
+            content["blog_posts"] = [
+                post.get_text(separator=" ", strip=True) 
+                for post in blog_section.find_all(['article', 'div'])
+            ]
 
         # Extract social media links
         social_links = soup.find_all('a', href=re.compile(
@@ -505,9 +519,13 @@ def scrape_website_content_selenium(website_url: str) -> Optional[str]:
         # Extract client list
         client_section = soup.find(['div', 'section'], string=re.compile(r'clients|partners', re.I))
         if client_section:
-            content["client_list"] = [img['alt'] for img in client_section.find_all('img') if 'client' in img.get('alt', '').lower()]
+            content["client_list"] = [
+                img['alt'] 
+                for img in client_section.find_all('img') 
+                if 'client' in img.get('alt', '').lower()
+            ]
 
-        # Format for AI analysis
+        # Format for AI analysis (fixed main content extraction)
         formatted_content = f"""
 BUSINESS ANALYSIS DATA:
 1. Customer Evidence:
@@ -520,14 +538,18 @@ BUSINESS ANALYSIS DATA:
    - Blog Posts: {content['blog_posts'][:3]}
 
 3. Main Content:
-'. '.join([p.text.strip() for p in soup.find_all('p')[:3] if p.text.strip()])
+   {'. '.join([
+       p.get_text(separator=" ", strip=True) 
+       for p in soup.find_all('p')[:3] 
+       if p.get_text(strip=True)
+   ])}
 """
         return formatted_content
 
     except Exception as e:
         st.error(f"Scraping error: {str(e)}")
         return None
-# Function to optimize AI report generation with caching
+        # Function to optimize AI report generation with caching
 @st.cache_data(ttl=3600)  # Cache results for 1 hour
 def generate_ai_report_optimized(extracted_content: str) -> Optional[str]:
     """
