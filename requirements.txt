@@ -15,4 +15,3 @@ textstat
 wordcloud
 matplotlib
 axe-selenium-python
-re
