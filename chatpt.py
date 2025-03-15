@@ -183,6 +183,10 @@ def clear_data():
 
 # Simplified website scraping function using requests and BeautifulSoup (no Selenium)
 def scrape_website_content(website_url: str) -> Optional[str]:
+    """
+    Enhanced scraping that extracts targeted business content and falls back to full text
+    if the extracted data is too sparse.
+    """
     try:
         if not website_url.startswith(('http://', 'https://')):
             website_url = 'https://' + website_url
@@ -190,8 +194,11 @@ def scrape_website_content(website_url: str) -> Optional[str]:
         response = requests.get(website_url, headers=headers, timeout=15)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Remove unwanted elements
         for element in soup(['script', 'style', 'meta', 'link', 'noscript']):
             element.decompose()
+
         content = {
             "testimonials": [],
             "use_cases": [],
@@ -200,12 +207,14 @@ def scrape_website_content(website_url: str) -> Optional[str]:
             "client_list": [],
             "main_content": []
         }
+
         # Extract testimonials
         for section in soup.find_all(['div', 'section'], class_=re.compile(r'testimonial|review|case-study', re.I)):
             content["testimonials"].extend([
                 p.get_text(separator=" ", strip=True)
                 for p in section.find_all('p') if p.get_text(strip=True)
             ])
+
         # Extract use cases
         use_case_section = soup.find(['div', 'section'], string=re.compile(r'case studies|use cases', re.I))
         if use_case_section:
@@ -213,6 +222,7 @@ def scrape_website_content(website_url: str) -> Optional[str]:
                 case.get_text(separator=" ", strip=True)
                 for case in use_case_section.find_all(['div', 'li'])
             ]
+
         # Extract blog posts
         blog_section = soup.find(['div', 'section'], string=re.compile(r'blog|articles', re.I))
         if blog_section:
@@ -220,6 +230,7 @@ def scrape_website_content(website_url: str) -> Optional[str]:
                 post.get_text(separator=" ", strip=True)
                 for post in blog_section.find_all(['article', 'div'])
             ]
+
         # Extract social media links
         social_links = soup.find_all('a', href=re.compile(
             r'linkedin\.com|twitter\.com|facebook\.com|instagram\.com', re.I))
@@ -227,6 +238,7 @@ def scrape_website_content(website_url: str) -> Optional[str]:
             platform = re.search(r'(linkedin|twitter|facebook|instagram)', link['href'], re.I)
             if platform:
                 content["social_links"][platform.group(1).lower()] = link['href']
+
         # Extract client list
         client_section = soup.find(['div', 'section'], string=re.compile(r'clients|partners', re.I))
         if client_section:
@@ -235,24 +247,41 @@ def scrape_website_content(website_url: str) -> Optional[str]:
                 for img in client_section.find_all('img')
                 if 'client' in img.get('alt', '').lower()
             ]
+
+        # Extract main content: first try extracting from <p> tags
+        main_text = ' '.join([p.get_text(separator=" ", strip=True) 
+                              for p in soup.find_all('p') if p.get_text(strip=True)])
+        content["main_content"] = main_text
+
+        # Format the extracted content
         formatted_content = f"""
 BUSINESS ANALYSIS DATA:
 1. Customer Evidence:
-   - Testimonials: {content['testimonials'][:5]}
-   - Use Cases: {content['use_cases'][:5]}
-   - Clients: {content['client_list'][:10]}
+   - Testimonials: {content['testimonials'][:5] if content['testimonials'] else 'N/A'}
+   - Use Cases: {content['use_cases'][:5] if content['use_cases'] else 'N/A'}
+   - Clients: {content['client_list'][:10] if content['client_list'] else 'N/A'}
 
 2. Digital Presence:
-   - Social Media: {content['social_links']}
-   - Blog Posts: {content['blog_posts'][:3]}
+   - Social Media: {content['social_links'] if content['social_links'] else 'N/A'}
+   - Blog Posts: {content['blog_posts'][:3] if content['blog_posts'] else 'N/A'}
 
 3. Main Content:
-   {'. '.join([p.get_text(separator=" ", strip=True) for p in soup.find_all('p')[:3] if p.get_text(strip=True)])}
+   {content["main_content"][:1000] if content["main_content"] else 'N/A'} 
+   <!-- Limiting to first 1000 characters for brevity -->
 """
+
+        # Fallback: If all targeted content is 'N/A' or too short, use a fallback extraction of all visible text.
+        extracted_length = len(formatted_content.strip())
+        if extracted_length < 200:  # threshold can be adjusted
+            fallback_text = soup.get_text(separator=" ", strip=True)
+            formatted_content = f"FULL PAGE TEXT:\n{fallback_text[:2000]}"  # limiting to first 2000 characters
+
         return formatted_content
+
     except Exception as e:
         st.error(f"Scraping error: {str(e)}")
         return None
+
 
 # Main dashboard layout
 st.sidebar.title("Navigation")
