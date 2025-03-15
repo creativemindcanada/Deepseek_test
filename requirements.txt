@@ -16,3 +16,4 @@ wordcloud
 matplotlib
 axe-selenium-python
 python-dotenv
+chromedriver-autoinstaller==0.4.0
